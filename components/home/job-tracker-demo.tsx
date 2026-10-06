@@ -35,7 +35,7 @@ export function JobTrackerDemo() {
   const current = reduce ? JOB_STATUS_FLOW.length - 2 : step
 
   return (
-    <section className="border-y border-border bg-surface py-20 sm:py-28" aria-labelledby="tracker-title">
+    <section className="overflow-x-clip border-y border-border bg-surface py-20 sm:py-28" aria-labelledby="tracker-title">
       <div className="mx-auto grid max-w-[1440px] gap-14 px-4 sm:px-6 lg:grid-cols-[1fr_1.1fr] lg:items-center">
         <div>
           <SectionHeading
