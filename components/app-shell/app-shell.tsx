@@ -83,8 +83,9 @@ export function AppShell({
   return (
     <LiveModeProvider polling={user.isDemo}>
       <div className="min-h-svh lg:grid lg:grid-cols-[272px_minmax(0,1fr)]">
-        {/* Sidebar */}
-        <aside className="dark sticky top-0 hidden h-svh flex-col border-r border-white/5 bg-asphalt text-concrete lg:flex">
+        {/* Sidebar — fixed (not sticky) so it always spans the viewport, even if
+            something outside the shell makes the page taller than the grid */}
+        <aside className="dark fixed inset-y-0 left-0 z-40 hidden w-[272px] flex-col border-r border-white/5 bg-asphalt text-concrete lg:flex">
           <div className="flex h-16 shrink-0 items-center gap-3 border-b border-white/5 px-6">
             <Link href="/" aria-label="JAC Motors website">
               <JacMark title={null} className="h-5" />
@@ -102,7 +103,7 @@ export function AppShell({
         </aside>
 
         {/* Main column */}
-        <div className="flex min-w-0 flex-col">
+        <div className="flex min-w-0 flex-col lg:col-start-2">
           {user.isDemo ? <DemoToolbar name={user.name} role={user.role} /> : null}
           <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-xl">
             <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-10">
