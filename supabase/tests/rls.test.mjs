@@ -77,6 +77,9 @@ export default async function rlsSuite(db, q) {
   await as("authenticated", uadv.id)
   ok("advisor sees role-broadcast booking notification", (await n(`select count(*) n from notifications`)) >= 1)
   ok("advisor confirms booking", !(await tryq(`update service_bookings set status='confirmed', scheduled_at=now() where id='${bkId}'`)).error)
+  await as("authenticated", ua.id)
+  ok("customer notified of booking confirmation", (await n(`select count(*) n from notifications where type='booking.confirmed'`)) === 1)
+  await as("authenticated", uadv.id)
   const jo = await tryq(`insert into job_orders (booking_id, customer_id, fleet_unit_id, truck_model, plate_number, mileage_in_km, complaint, mechanic_id, service_advisor_id) values ('${bkId}','${ca.id}','${fuId}','N55','NAD 6513', 50210,'Brake noise','${umech.id}','${uadv.id}') returning id, reference`)
   ok("advisor creates job order", !jo.error, jo.error)
   const joId = jo.rows?.[0]?.id

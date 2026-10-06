@@ -1,6 +1,6 @@
 "use server"
 
-import { randomUUID } from "node:crypto"
+import { after } from "next/server"
 import { z } from "zod"
 import { createSupabaseAdminClient } from "@/lib/supabase/admin"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
@@ -8,12 +8,12 @@ import { siteConfig } from "@/lib/config/site"
 import {
   partQuoteSchema,
   truckQuoteSchema,
-  uploadRequestSchema,
   type ActionResult,
   type PartQuoteInput,
   type TruckQuoteInput,
 } from "@/lib/validation/quote"
 import { resolveCustomerId } from "@/server/customers"
+import { notifyQuoteCreated } from "@/server/notifications"
 import { getClientIp, looksLikeBot, rateLimit } from "@/server/security/guards"
 
 const UNAVAILABLE = `Online requests are temporarily unavailable. Please call ${siteConfig.contact.phoneDisplay} or message us on Viber — we'll take it from there.`
@@ -81,7 +81,7 @@ export async function submitTruckQuote(input: TruckQuoteInput): Promise<ActionRe
       .single()
     if (error) throw error
 
-    // Step 4 hooks customer + staff emails in here.
+    after(() => notifyQuoteCreated(quote.id))
     return { ok: true, data: { reference: quote.reference } }
   } catch (e) {
     console.error("[submitTruckQuote]", e)
@@ -139,39 +139,10 @@ export async function submitPartQuote(input: PartQuoteInput): Promise<ActionResu
       .single()
     if (error) throw error
 
+    after(() => notifyQuoteCreated(quote.id))
     return { ok: true, data: { reference: quote.reference } }
   } catch (e) {
     console.error("[submitPartQuote]", e)
     return { ok: false, error: UNAVAILABLE }
   }
-}
-
-/* -------------------------------------------------------------------------- */
-/*  Photo uploads — signed upload URLs straight to the private bucket          */
-/* -------------------------------------------------------------------------- */
-
-export async function createUploadTargets(input: z.input<typeof uploadRequestSchema>): Promise<
-  ActionResult<{ targets: { path: string; token: string }[] }>
-> {
-  const parsed = uploadRequestSchema.safeParse(input)
-  if (!parsed.success) return { ok: false, error: z.flattenError(parsed.error).formErrors[0] ?? parsed.error.issues[0]?.message ?? "Invalid files" }
-
-  const ip = await getClientIp()
-  if (!(await rateLimit(`upload:${ip}`, 10, 600))) return { ok: false, error: RATE_LIMITED }
-  if (!servicesReady()) return { ok: false, error: "Photo uploads are unavailable right now — you can send photos on Viber instead." }
-
-  const admin = createSupabaseAdminClient()
-  const folder = `public/${randomUUID()}`
-  const targets: { path: string; token: string }[] = []
-  for (const [i, file] of parsed.data.files.entries()) {
-    const safe = file.name.normalize("NFKD").replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "").slice(-60) || "photo"
-    const path = `${folder}/${i}-${safe}`
-    const { data, error } = await admin.storage.from("uploads").createSignedUploadUrl(path)
-    if (error || !data) {
-      console.error("[createUploadTargets]", error)
-      return { ok: false, error: "Couldn't prepare the upload. Please try again." }
-    }
-    targets.push({ path: data.path, token: data.token })
-  }
-  return { ok: true, data: { targets } }
 }

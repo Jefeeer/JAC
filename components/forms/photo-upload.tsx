@@ -5,7 +5,7 @@ import { CameraIcon, LoaderIcon, TriangleAlertIcon, XIcon } from "lucide-react"
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 import { ALLOWED_UPLOAD_TYPES, MAX_UPLOADS, MAX_UPLOAD_BYTES } from "@/lib/validation/quote"
-import { createUploadTargets } from "@/server/actions/quotes"
+import { createUploadTargets } from "@/server/actions/uploads"
 import { cn } from "@/lib/utils"
 
 type Item = { id: string; file: File; preview: string; status: "uploading" | "done" | "error"; path?: string; error?: string }
@@ -16,7 +16,16 @@ type Item = { id: string; file: File; preview: string; status: "uploading" | "do
  * Action — they never pass through our serverless functions.
  * Reports the uploaded storage paths through `onChange`.
  */
-export function PhotoUpload({ onChange, onBusyChange }: { onChange: (paths: string[]) => void; onBusyChange?: (busy: boolean) => void }) {
+export function PhotoUpload({
+  onChange,
+  onBusyChange,
+  hint = "photos of the old part, its label or part number",
+}: {
+  onChange: (paths: string[]) => void
+  onBusyChange?: (busy: boolean) => void
+  /** What to photograph, e.g. "photos of the damage or warning lights" */
+  hint?: string
+}) {
   const inputId = useId()
   const inputRef = useRef<HTMLInputElement>(null)
   const [items, setItems] = useState<Item[]>([])
@@ -132,7 +141,7 @@ export function PhotoUpload({ onChange, onBusyChange }: { onChange: (paths: stri
         ) : null}
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        Up to {MAX_UPLOADS} photos of the old part, its label or part number — JPG, PNG, WebP or HEIC, 8 MB each.
+        Up to {MAX_UPLOADS} {hint} — JPG, PNG, WebP or HEIC, 8 MB each.
       </p>
       {error ? (
         <p className="mt-1 text-xs font-medium text-destructive" role="alert">
