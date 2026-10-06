@@ -121,7 +121,7 @@ export const branches: Branch[] = [
     slug: "cavite",
     code: "CAV",
     name: "Cavite",
-    address: "KM 29 Emilio Aguinaldo Hwy",
+    address: "KM 29 Emilio Aguinaldo Hwy, Salitran 2",
     city: "Dasmariñas",
     province: "Cavite",
     region: "Luzon",
@@ -132,9 +132,11 @@ export const branches: Branch[] = [
     isHeadOffice: false,
     services: ["sales", "parts", "service"],
     hours: standardHours,
-    mapQuery: "JAC Motors Cavite, KM 29 Aguinaldo Hwy Dasmariñas",
-    lat: 14.3294,
-    lng: 120.9367,
+    // The Google Maps listing name (plus code 8WWQ+C3). A street-address query
+    // resolves to "29 Emilio Aguinaldo Hwy", ~650 m south of the shop.
+    mapQuery: "JAC Motors Dasmarinas Cavite",
+    lat: 14.3461,
+    lng: 120.9377,
   },
   {
     slug: "pampanga",

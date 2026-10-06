@@ -11,7 +11,7 @@ export function ThemeToggle({ className }: { className?: string }) {
   // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration guard for theme-dependent icon
   useEffect(() => setMounted(true), [])
 
-  const isDark = mounted ? resolvedTheme === "dark" : true
+  const isDark = mounted ? resolvedTheme === "dark" : false
 
   return (
     <button

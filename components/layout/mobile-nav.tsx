@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
+import { NavLink } from "@/components/layout/nav-link"
 import { usePathname } from "next/navigation"
 import { ArrowUpRightIcon, MenuIcon, UserRoundIcon } from "lucide-react"
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
@@ -39,7 +39,7 @@ export function MobileNav() {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
               return (
                 <li key={item.href}>
-                  <Link
+                  <NavLink
                     href={item.href}
                     onClick={() => setOpen(false)}
                     aria-current={active ? "page" : undefined}
@@ -55,27 +55,27 @@ export function MobileNav() {
                       {item.label}
                     </span>
                     <span className="ml-auto self-center text-xs text-concrete/50">{item.description}</span>
-                  </Link>
+                  </NavLink>
                 </li>
               )
             })}
           </ol>
 
           <div className="mt-6 grid grid-cols-2 gap-3">
-            <Link
+            <NavLink
               href="/book-service"
               onClick={() => setOpen(false)}
               className="col-span-2 inline-flex h-14 items-center justify-between rounded-sm bg-brand px-5 font-wide text-xs font-bold tracking-[0.14em] text-white uppercase"
             >
               Book a service <ArrowUpRightIcon className="size-4" />
-            </Link>
-            <Link
+            </NavLink>
+            <NavLink
               href="/account"
               onClick={() => setOpen(false)}
               className="inline-flex h-12 items-center justify-center gap-2 rounded-sm border border-white/15 text-sm"
             >
               <UserRoundIcon className="size-4" /> Portal
-            </Link>
+            </NavLink>
             <ThemeToggle className="h-12 w-full border-white/15 text-concrete" />
           </div>
         </nav>

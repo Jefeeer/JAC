@@ -213,16 +213,16 @@ export function BookingForm({
       <Step no="01" title="You" sub="So we can confirm your slot">
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Full name" error={e.name?.message}>
-            {(a) => <TextInput {...a} {...register("name")} autoComplete="name" />}
+            {(a) => <TextInput {...a} {...register("name")} autoComplete="name" placeholder="Juan dela Cruz" />}
           </Field>
           <Field label="Company / fleet" optional error={e.company?.message}>
-            {(a) => <TextInput {...a} {...register("company")} autoComplete="organization" />}
+            {(a) => <TextInput {...a} {...register("company")} autoComplete="organization" placeholder="e.g. Dela Cruz Trucking" />}
           </Field>
           <Field label="Mobile number" error={e.phone?.message} hint="We confirm bookings by call or SMS.">
             {(a) => <TextInput {...a} {...register("phone")} type="tel" autoComplete="tel" placeholder="0917 123 4567" />}
           </Field>
           <Field label="Email" error={e.email?.message}>
-            {(a) => <TextInput {...a} {...register("email")} type="email" autoComplete="email" />}
+            {(a) => <TextInput {...a} {...register("email")} type="email" autoComplete="email" placeholder="you@company.ph" />}
           </Field>
         </div>
       </Step>
@@ -230,7 +230,7 @@ export function BookingForm({
       <Step no="02" title="Truck" sub="Make, model, plate and odometer">
         <div className="grid gap-5 sm:grid-cols-[1fr_1.4fr_0.8fr]">
           <Field label="Make" error={e.truckMake?.message}>
-            {(a) => <TextInput {...a} {...register("truckMake")} />}
+            {(a) => <TextInput {...a} {...register("truckMake")} placeholder="e.g. JAC" />}
           </Field>
           <Field label="Model" error={e.truckModel?.message}>
             {(a) => (

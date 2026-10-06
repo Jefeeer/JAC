@@ -45,7 +45,20 @@ export function PartFilterSidebar({ categories, filters }: { categories: Categor
   )
 }
 
-export function PartFilterSheet({ categories, filters, activeCount, total }: { categories: CategoryWithCount[]; filters: PartFilters; activeCount: number; total: number }) {
+/** Only the form is keyed by the URL — keying the sheet would close it after every tap. */
+export function PartFilterSheet({
+  formKey,
+  categories,
+  filters,
+  activeCount,
+  total,
+}: {
+  formKey: string
+  categories: CategoryWithCount[]
+  filters: PartFilters
+  activeCount: number
+  total: number
+}) {
   const [open, setOpen] = useState(false)
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -59,7 +72,7 @@ export function PartFilterSheet({ categories, filters, activeCount, total }: { c
           <SheetDescription className="sr-only">Narrow the parts catalog</SheetDescription>
         </div>
         <div className="flex-1 overflow-y-auto px-5 pb-6">
-          <AutoForm preserve={preserveFor(filters)}>
+          <AutoForm key={formKey} preserve={preserveFor(filters)}>
             <Fields categories={categories} filters={filters} />
           </AutoForm>
         </div>

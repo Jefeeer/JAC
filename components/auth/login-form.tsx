@@ -130,7 +130,7 @@ export function LoginForm({ next, linkError }: { next: string; linkError: boolea
         )}
       </Field>
       <Field label="Your name" optional hint="First time here? We'll create your account with this name.">
-        {(a) => <TextInput {...a} value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" />}
+        {(a) => <TextInput {...a} value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" placeholder="Juan dela Cruz" />}
       </Field>
       <button
         type="submit"

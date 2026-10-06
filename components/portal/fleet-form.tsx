@@ -68,7 +68,7 @@ export function FleetForm({ initial, models }: { initial?: FleetUnitInput; model
       {initial?.id ? <input type="hidden" {...register("id")} /> : null}
       <Section title="Unit">
         <Field label="Make" error={e.make?.message}>
-          {(a) => <TextInput {...a} {...register("make")} />}
+          {(a) => <TextInput {...a} {...register("make")} placeholder="e.g. JAC, Isuzu, Fuso" />}
         </Field>
         <Field label="Model" error={e.model?.message}>
           {(a) => (
@@ -83,22 +83,22 @@ export function FleetForm({ initial, models }: { initial?: FleetUnitInput; model
           )}
         </Field>
         <Field label="Nickname" optional error={e.nickname?.message} hint="e.g. “Reefer 3” or the driver's name">
-          {(a) => <TextInput {...a} {...register("nickname")} />}
+          {(a) => <TextInput {...a} {...register("nickname")} placeholder="e.g. Reefer 3" />}
         </Field>
         <Field label="Year" optional error={e.year?.message}>
-          {(a) => <TextInput {...a} {...register("year")} inputMode="numeric" maxLength={4} />}
+          {(a) => <TextInput {...a} {...register("year")} inputMode="numeric" maxLength={4} placeholder="2022" />}
         </Field>
         <Field label="Plate number" optional error={e.plateNumber?.message}>
-          {(a) => <TextInput {...a} {...register("plateNumber")} className="font-mono uppercase" autoCapitalize="characters" />}
+          {(a) => <TextInput {...a} {...register("plateNumber")} className="font-mono uppercase" autoCapitalize="characters" placeholder="NAD 6513" />}
         </Field>
         <Field label="Color" optional error={e.color?.message}>
-          {(a) => <TextInput {...a} {...register("color")} />}
+          {(a) => <TextInput {...a} {...register("color")} placeholder="e.g. White" />}
         </Field>
         <Field label="VIN / chassis no." optional error={e.vin?.message}>
-          {(a) => <TextInput {...a} {...register("vin")} className="font-mono uppercase" autoCapitalize="characters" />}
+          {(a) => <TextInput {...a} {...register("vin")} className="font-mono uppercase" autoCapitalize="characters" placeholder="LJ11KBBC8N1000000" />}
         </Field>
         <Field label="Engine no." optional error={e.engineNumber?.message}>
-          {(a) => <TextInput {...a} {...register("engineNumber")} className="font-mono uppercase" autoCapitalize="characters" />}
+          {(a) => <TextInput {...a} {...register("engineNumber")} className="font-mono uppercase" autoCapitalize="characters" placeholder="ISF38E5000000" />}
         </Field>
         <Field label="Purchase date" optional error={e.purchaseDate?.message}>
           {(a) => <TextInput {...a} {...register("purchaseDate")} type="date" className="font-mono" />}
@@ -113,14 +113,14 @@ export function FleetForm({ initial, models }: { initial?: FleetUnitInput; model
           {(a) => <TextInput {...a} {...register("lastServiceDate")} type="date" className="font-mono" />}
         </Field>
         <Field label="Odometer at last service (km)" optional error={e.lastServiceMileageKm?.message}>
-          {(a) => <TextInput {...a} {...register("lastServiceMileageKm")} inputMode="numeric" className="font-mono" />}
+          {(a) => <TextInput {...a} {...register("lastServiceMileageKm")} inputMode="numeric" className="font-mono" placeholder="40000" />}
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Service every (km)" error={e.serviceIntervalKm?.message}>
-            {(a) => <TextInput {...a} {...register("serviceIntervalKm")} inputMode="numeric" className="font-mono" />}
+            {(a) => <TextInput {...a} {...register("serviceIntervalKm")} inputMode="numeric" className="font-mono" placeholder="10000" />}
           </Field>
           <Field label="…or months" error={e.serviceIntervalMonths?.message}>
-            {(a) => <TextInput {...a} {...register("serviceIntervalMonths")} inputMode="numeric" className="font-mono" />}
+            {(a) => <TextInput {...a} {...register("serviceIntervalMonths")} inputMode="numeric" className="font-mono" placeholder="6" />}
           </Field>
         </div>
         <label className="flex cursor-pointer items-center gap-3 sm:col-span-2">

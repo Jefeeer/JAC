@@ -138,7 +138,23 @@ export function TruckFilterSidebar({ facets, filters }: { facets: TruckFacets; f
   )
 }
 
-export function TruckFilterSheet({ facets, filters, activeCount, total }: { facets: TruckFacets; filters: Filters; activeCount: number; total: number }) {
+/**
+ * Mobile filter sheet. Only the form is keyed by the URL (`formKey`) — keying
+ * the whole sheet would remount it and close it after every filter you tap.
+ */
+export function TruckFilterSheet({
+  formKey,
+  facets,
+  filters,
+  activeCount,
+  total,
+}: {
+  formKey: string
+  facets: TruckFacets
+  filters: Filters
+  activeCount: number
+  total: number
+}) {
   const [open, setOpen] = useState(false)
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -153,7 +169,7 @@ export function TruckFilterSheet({ facets, filters, activeCount, total }: { face
           <SheetDescription className="sr-only">Narrow the truck inventory</SheetDescription>
         </div>
         <div className="flex-1 overflow-y-auto px-5 pb-6">
-          <AutoForm preserve={{ q: filters.q, sort: filters.sort === "newest" ? undefined : filters.sort }}>
+          <AutoForm key={formKey} preserve={{ q: filters.q, sort: filters.sort === "newest" ? undefined : filters.sort }}>
             <FilterFields facets={facets} filters={filters} />
           </AutoForm>
         </div>

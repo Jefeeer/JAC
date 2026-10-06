@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { NavLink } from "@/components/layout/nav-link"
 import { JacMark } from "@/components/brand/logo"
 import { FacebookIcon, MessengerIcon, ViberIcon } from "@/components/brand/channel-icons"
 import { branches } from "@/lib/config/branches"
@@ -60,9 +60,9 @@ export function SiteFooter() {
                 <ul className="mt-4 space-y-2.5 text-sm">
                   {group.items.map((item) => (
                     <li key={item.href}>
-                      <Link href={item.href} className="text-concrete/80 transition-colors hover:text-white">
+                      <NavLink href={item.href} className="text-concrete/80 transition-colors hover:text-white">
                         {item.label}
-                      </Link>
+                      </NavLink>
                     </li>
                   ))}
                 </ul>
@@ -73,10 +73,10 @@ export function SiteFooter() {
               <ul className="mt-4 space-y-2.5 text-sm">
                 {branches.map((b) => (
                   <li key={b.slug}>
-                    <Link href={`/contact#${b.slug}`} className="group flex items-baseline gap-2 text-concrete/80 hover:text-white">
+                    <NavLink href={`/contact#${b.slug}`} className="group flex items-baseline gap-2 text-concrete/80 hover:text-white">
                       <span className="font-mono text-[10px] text-concrete/65 group-hover:text-brand-ink">{b.code}</span>
                       {b.name}
-                    </Link>
+                    </NavLink>
                   </li>
                 ))}
               </ul>
@@ -97,15 +97,15 @@ export function SiteFooter() {
             © {year} {siteConfig.legalName}. All rights reserved.
           </p>
           <p className="flex flex-wrap gap-x-5 gap-y-1">
-            <Link href="/credits" className="hover:text-concrete">
+            <NavLink href="/credits" className="hover:text-concrete">
               Photo credits
-            </Link>
-            <Link href="/privacy" className="hover:text-concrete">
+            </NavLink>
+            <NavLink href="/privacy" className="hover:text-concrete">
               Privacy
-            </Link>
-            <Link href="/terms" className="hover:text-concrete">
+            </NavLink>
+            <NavLink href="/terms" className="hover:text-concrete">
               Terms
-            </Link>
+            </NavLink>
             <a href={`mailto:${contact.email}`} className="hover:text-concrete">
               {contact.email}
             </a>

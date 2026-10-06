@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { NavLink } from "@/components/layout/nav-link"
 import { UserRoundIcon, WrenchIcon } from "lucide-react"
 import { Logo } from "@/components/brand/logo"
 import { MessengerIcon, ViberIcon } from "@/components/brand/channel-icons"
@@ -45,29 +45,29 @@ export function SiteHeader() {
       {/* Main bar */}
       <div className="border-b border-border bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
         <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-6 px-4 sm:px-6">
-          <Link href="/" className="shrink-0 rounded-sm">
+          <NavLink href="/" className="shrink-0 rounded-sm">
             <Logo showRegion />
             <span className="sr-only"> — home</span>
-          </Link>
+          </NavLink>
 
           <DesktopNav />
 
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle className="hidden sm:grid" />
-            <Link
+            <NavLink
               href="/account"
               className="hidden size-10 place-items-center rounded-sm border border-border text-foreground/80 transition-colors hover:border-foreground/40 hover:text-foreground sm:grid"
               aria-label="Customer portal"
             >
               <UserRoundIcon className="size-4" />
-            </Link>
-            <Link
+            </NavLink>
+            <NavLink
               href="/book-service"
               className="shutter hidden h-10 items-center gap-2 rounded-sm bg-foreground px-4 font-wide text-[11px] font-bold tracking-[0.14em] text-background uppercase transition-colors hover:text-white md:inline-flex"
             >
               <WrenchIcon className="size-3.5" />
               Book service
-            </Link>
+            </NavLink>
             <MobileNav />
           </div>
         </div>

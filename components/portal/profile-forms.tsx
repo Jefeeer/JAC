@@ -52,10 +52,10 @@ export function ProfileForm({ initial, email }: { initial: z.input<typeof profil
     >
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Full name" error={formState.errors.fullName?.message}>
-          {(a) => <TextInput {...a} {...register("fullName")} autoComplete="name" />}
+          {(a) => <TextInput {...a} {...register("fullName")} autoComplete="name" placeholder="Juan dela Cruz" />}
         </Field>
         <Field label="Mobile number" optional error={formState.errors.phone?.message} hint="Used for booking confirmations and job SMS.">
-          {(a) => <TextInput {...a} {...register("phone")} type="tel" autoComplete="tel" />}
+          {(a) => <TextInput {...a} {...register("phone")} type="tel" autoComplete="tel" placeholder="0917 123 4567" />}
         </Field>
         <Field label="Email" hint="Your sign-in address. Contact us to change it.">
           {(a) => <TextInput {...a} value={email} readOnly disabled />}
@@ -90,7 +90,7 @@ export function CompanyForm({ initial, exists }: { initial: z.input<typeof compa
     >
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Company name" error={e.name?.message} className="sm:col-span-2">
-          {(a) => <TextInput {...a} {...register("name")} autoComplete="organization" />}
+          {(a) => <TextInput {...a} {...register("name")} autoComplete="organization" placeholder="e.g. Dela Cruz Trucking Services" />}
         </Field>
         <Field label="TIN" optional error={e.tin?.message} hint="For invoices.">
           {(a) => <TextInput {...a} {...register("tin")} className="font-mono" placeholder="000-000-000-000" />}
@@ -99,22 +99,22 @@ export function CompanyForm({ initial, exists }: { initial: z.input<typeof compa
           {(a) => <TextInput {...a} {...register("industry")} placeholder="Logistics, construction, LGU…" />}
         </Field>
         <Field label="Fleet size" optional error={e.fleetSize?.message}>
-          {(a) => <TextInput {...a} {...register("fleetSize")} inputMode="numeric" />}
+          {(a) => <TextInput {...a} {...register("fleetSize")} inputMode="numeric" placeholder="e.g. 12" />}
         </Field>
         <Field label="Company phone" optional error={e.phone?.message}>
-          {(a) => <TextInput {...a} {...register("phone")} type="tel" />}
+          {(a) => <TextInput {...a} {...register("phone")} type="tel" placeholder="(02) 8123-4567" />}
         </Field>
         <Field label="Billing email" optional error={e.email?.message}>
-          {(a) => <TextInput {...a} {...register("email")} type="email" />}
+          {(a) => <TextInput {...a} {...register("email")} type="email" placeholder="billing@company.ph" />}
         </Field>
         <Field label="Address" optional error={e.address?.message} className="sm:col-span-2">
-          {(a) => <TextInput {...a} {...register("address")} autoComplete="street-address" />}
+          {(a) => <TextInput {...a} {...register("address")} autoComplete="street-address" placeholder="e.g. 123 EDSA, Brgy. Balintawak" />}
         </Field>
         <Field label="City" optional error={e.city?.message}>
-          {(a) => <TextInput {...a} {...register("city")} />}
+          {(a) => <TextInput {...a} {...register("city")} placeholder="e.g. Quezon City" />}
         </Field>
         <Field label="Province" optional error={e.province?.message}>
-          {(a) => <TextInput {...a} {...register("province")} />}
+          {(a) => <TextInput {...a} {...register("province")} placeholder="e.g. Metro Manila" />}
         </Field>
       </div>
       <SaveBar pending={pending} saved={saved} error={error} label={exists ? "Save company" : "Create company account"} />

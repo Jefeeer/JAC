@@ -5,7 +5,11 @@ import { CatalogNavProvider, CatalogResults, CatalogSearch, PendingBar } from "@
 import { FilterChips } from "@/components/catalog/filter-chips"
 import { Pagination } from "@/components/catalog/pagination"
 import { SortSelect } from "@/components/catalog/sort-select"
+import { ScrollToHash } from "@/components/shared/scroll-to-hash"
+import { SectionHeading } from "@/components/shared/section-heading"
 import { TruckCard } from "@/components/shared/truck-card"
+import { FinanceCalculator } from "@/components/trucks/finance-calculator"
+import { PurchaseProvider } from "@/components/trucks/purchase-context"
 import { TruckFilterSheet, TruckFilterSidebar } from "@/components/trucks/truck-filters"
 import { contactLinks, siteConfig } from "@/lib/config/site"
 import { formatPesoCompact } from "@/lib/format"
@@ -92,7 +96,7 @@ export default async function TrucksPage(props: PageProps<"/trucks">) {
         </div>
       </section>
 
-      <div className="mx-auto grid max-w-[1440px] gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[280px_1fr]">
+      <div id="inventory" className="mx-auto grid max-w-[1440px] scroll-mt-28 gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[280px_1fr]">
         {/* Sidebar */}
         <aside className="hidden lg:block" aria-label="Filters">
           <div className="sticky top-28 max-h-[calc(100svh-8rem)] overflow-y-auto pr-2 pb-8 no-scrollbar">
@@ -104,7 +108,7 @@ export default async function TrucksPage(props: PageProps<"/trucks">) {
           {/* Toolbar */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <TruckFilterSheet key={formKey} facets={facets} filters={filters} activeCount={chips.length} total={result.total} />
+              <TruckFilterSheet formKey={formKey} facets={facets} filters={filters} activeCount={chips.length} total={result.total} />
               <p className="text-sm text-muted-foreground" aria-live="polite">
                 {result.total === 0 ? (
                   "No matching units"
@@ -161,6 +165,24 @@ export default async function TrucksPage(props: PageProps<"/trucks">) {
           </div>
         </div>
       </div>
+
+      {/* Financing — target of the footer's "Financing & trade-in" link */}
+      <section id="financing" className="scroll-mt-28 border-t border-border bg-surface py-16 sm:py-20" aria-labelledby="financing-title">
+        <div className="mx-auto max-w-[1440px] px-4 sm:px-6">
+          <SectionHeading
+            bay="F"
+            label="Financing & trade-in"
+            title={<span id="financing-title">Run the numbers.</span>}
+            description="Financing through our bank partners with terms up to 60 months, plus trade-in credit for your current truck. Estimate your monthly here, then open a unit to attach the numbers to your quote."
+          />
+          <div className="mt-10">
+            <PurchaseProvider>
+              <FinanceCalculator price={null} priceOnRequest={false} standalone />
+            </PurchaseProvider>
+          </div>
+        </div>
+      </section>
+      <ScrollToHash />
     </CatalogNavProvider>
   )
 }

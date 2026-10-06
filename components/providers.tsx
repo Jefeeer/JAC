@@ -7,7 +7,7 @@ import { ConfirmProvider } from "@/components/shared/confirm"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
       <TooltipProvider>
         <ConfirmProvider>{children}</ConfirmProvider>
         <Toaster position="top-center" richColors closeButton />

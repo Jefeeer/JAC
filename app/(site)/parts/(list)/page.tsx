@@ -90,7 +90,7 @@ export default async function PartsPage(props: PageProps<"/parts">) {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <PartFilterSheet key={formKey} categories={categories} filters={filters} activeCount={(filters.category ? 1 : 0) + (filters.inStock ? 1 : 0)} total={result.total} />
+              <PartFilterSheet formKey={formKey} categories={categories} filters={filters} activeCount={(filters.category ? 1 : 0) + (filters.inStock ? 1 : 0)} total={result.total} />
               <p className="text-sm text-muted-foreground" aria-live="polite">
                 {result.total === 0 ? (
                   "No matching parts"

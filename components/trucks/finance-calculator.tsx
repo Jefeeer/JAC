@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useId, useMemo, useState } from "react"
-import { ArrowDownIcon, RepeatIcon } from "lucide-react"
+import { ArrowDownIcon, ArrowUpIcon, RepeatIcon } from "lucide-react"
 import { Field, TextInput } from "@/components/forms/controls"
 import { usePurchase } from "@/components/trucks/purchase-context"
 import { formatPeso } from "@/lib/format"
@@ -24,8 +24,18 @@ const parsePeso = (v: string) => {
 /**
  * Financing + trade-in estimator. Pure client-side maths (standard
  * amortisation); results can be attached to the quote request.
+ * `standalone` (inventory page) has no quote form below it, so the CTA
+ * sends the visitor back up to pick a unit instead.
  */
-export function FinanceCalculator({ price, priceOnRequest }: { price: number | null; priceOnRequest: boolean }) {
+export function FinanceCalculator({
+  price,
+  priceOnRequest,
+  standalone = false,
+}: {
+  price: number | null
+  priceOnRequest: boolean
+  standalone?: boolean
+}) {
   const { setEstimate, setTradeIn, setAttach, attach } = usePurchase()
   const [unitPrice, setUnitPrice] = useState<number>(priceOnRequest || price === null ? 0 : price)
   const [downPct, setDownPct] = useState(20)
@@ -81,7 +91,13 @@ export function FinanceCalculator({ price, priceOnRequest }: { price: number | n
       <div className="grid gap-7 bg-card p-6 sm:p-8">
         <Field
           label="Unit price"
-          hint={priceOnRequest || price === null ? "This unit is priced on request — enter the price from your quote or a budget." : "Cash price; edit to match a quoted price."}
+          hint={
+            standalone
+              ? "Enter a unit's cash price or your budget. Every listing has this calculator pre-filled."
+              : priceOnRequest || price === null
+                ? "This unit is priced on request — enter the price from your quote or a budget."
+                : "Cash price; edit to match a quoted price."
+          }
         >
           {(a) => (
             <div className="relative">
@@ -91,7 +107,7 @@ export function FinanceCalculator({ price, priceOnRequest }: { price: number | n
                 inputMode="numeric"
                 className="pl-8 font-mono"
                 value={unitPrice ? unitPrice.toLocaleString("en-PH") : ""}
-                placeholder="0"
+                placeholder="e.g. 1,850,000"
                 onChange={(e) => setUnitPrice(parsePeso(e.target.value))}
               />
             </div>
@@ -222,6 +238,14 @@ export function FinanceCalculator({ price, priceOnRequest }: { price: number | n
             ))}
           </dl>
 
+          {standalone ? (
+            <a
+              href="#inventory"
+              className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-sm bg-brand px-5 font-wide text-xs font-bold tracking-[0.14em] text-white uppercase transition-[filter] hover:brightness-110"
+            >
+              Pick a truck to quote <ArrowUpIcon className="size-4" />
+            </a>
+          ) : (
           <button
             type="button"
             disabled={unitPrice <= 0}
@@ -233,6 +257,7 @@ export function FinanceCalculator({ price, priceOnRequest }: { price: number | n
           >
             {attach ? "Attached to your quote" : "Attach to my quote"} <ArrowDownIcon className="size-4" />
           </button>
+          )}
           <p className="mt-4 text-xs leading-relaxed text-concrete/50">
             Estimate only — not a loan offer. Actual rates, down payment and terms depend on approval by the bank or financing partner.
           </p>

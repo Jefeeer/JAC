@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { NavLink } from "@/components/layout/nav-link"
 import { usePathname } from "next/navigation"
 import { mainNav } from "@/lib/config/site"
 import { cn } from "@/lib/utils"
@@ -15,7 +15,7 @@ export function DesktopNav() {
           const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
           return (
             <li key={item.href}>
-              <Link
+              <NavLink
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
@@ -26,7 +26,7 @@ export function DesktopNav() {
                 )}
               >
                 {item.label}
-              </Link>
+              </NavLink>
             </li>
           )
         })}

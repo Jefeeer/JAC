@@ -207,6 +207,11 @@ export const ids = Object.fromEntries(DEMO_ACCOUNTS.map((a) => [a.email.split("@
 /* ------------------------------------------------------------------- seed */
 
 function seed(): DemoDb {
+  // Deterministic ids: on Vercel every function instance seeds its own copy of
+  // this store, so random ids made a link rendered by one instance (e.g. the
+  // dashboard) 404 when the detail page was served by another.
+  let seq = 0
+  const sid = () => `00000000-0000-4000-8000-${(++seq).toString(16).padStart(12, "0")}`
   const now = Date.now()
   const db: DemoDb = {
     seededAt: now,
@@ -231,7 +236,7 @@ function seed(): DemoDb {
 
   /* companies + customers */
   const reyesCo: DCompany = {
-    id: randomUUID(),
+    id: sid(),
     name: "Reyes Cold Chain Logistics",
     tin: "123-456-789-000",
     industry: "Cold-chain logistics",
@@ -242,21 +247,21 @@ function seed(): DemoDb {
     city: "Quezon City",
     province: "Metro Manila",
   }
-  const hardwareCo: DCompany = { id: randomUUID(), name: "Dela Paz Hardware & Construction Supply", tin: null, industry: "Construction supply", fleetSize: 3, email: null, phone: null, address: null, city: "Dasmariñas", province: "Cavite" }
+  const hardwareCo: DCompany = { id: sid(), name: "Dela Paz Hardware & Construction Supply", tin: null, industry: "Construction supply", fleetSize: 3, email: null, phone: null, address: null, city: "Dasmariñas", province: "Cavite" }
   db.companies.push(reyesCo, hardwareCo)
 
-  const ana: DCustomer = { id: randomUUID(), profileId: ids.ana, companyId: reyesCo.id, fullName: "Ana Reyes", email: "ana.reyes@demo.jacmotors.ph", phone: "0917 555 0101", createdAt: iso(now - 400 * DAY) }
-  const ben: DCustomer = { id: randomUUID(), profileId: ids.ben, companyId: null, fullName: "Ben Santos", email: "ben.santos@demo.jacmotors.ph", phone: "0918 555 0202", createdAt: iso(now - 60 * DAY) }
-  const marco: DCustomer = { id: randomUUID(), profileId: null, companyId: hardwareCo.id, fullName: "Marco Dela Paz", email: "marco@delapaz.demo", phone: "0919 555 0303", createdAt: iso(now - 200 * DAY) }
-  const lgu: DCustomer = { id: randomUUID(), profileId: null, companyId: null, fullName: "Engr. Liza Ramos (LGU Motorpool)", email: "motorpool@lgu.demo", phone: "0920 555 0404", createdAt: iso(now - 30 * DAY) }
-  const lead1: DCustomer = { id: randomUUID(), profileId: null, companyId: null, fullName: "Paolo Cruz", email: "paolo.cruz@example.ph", phone: "0921 555 0505", createdAt: iso(now - 2 * DAY) }
-  const lead2: DCustomer = { id: randomUUID(), profileId: null, companyId: null, fullName: "Grace Lim", email: "grace@limfoods.demo", phone: "0922 555 0606", createdAt: iso(now - 0.3 * DAY) }
-  const ramon: DCustomer = { id: randomUUID(), profileId: null, companyId: null, fullName: "Ramon Villanueva", email: "ramon.v@example.ph", phone: "0923 555 0707", createdAt: iso(now - 25 * 60_000) }
+  const ana: DCustomer = { id: sid(), profileId: ids.ana, companyId: reyesCo.id, fullName: "Ana Reyes", email: "ana.reyes@demo.jacmotors.ph", phone: "0917 555 0101", createdAt: iso(now - 400 * DAY) }
+  const ben: DCustomer = { id: sid(), profileId: ids.ben, companyId: null, fullName: "Ben Santos", email: "ben.santos@demo.jacmotors.ph", phone: "0918 555 0202", createdAt: iso(now - 60 * DAY) }
+  const marco: DCustomer = { id: sid(), profileId: null, companyId: hardwareCo.id, fullName: "Marco Dela Paz", email: "marco@delapaz.demo", phone: "0919 555 0303", createdAt: iso(now - 200 * DAY) }
+  const lgu: DCustomer = { id: sid(), profileId: null, companyId: null, fullName: "Engr. Liza Ramos (LGU Motorpool)", email: "motorpool@lgu.demo", phone: "0920 555 0404", createdAt: iso(now - 30 * DAY) }
+  const lead1: DCustomer = { id: sid(), profileId: null, companyId: null, fullName: "Paolo Cruz", email: "paolo.cruz@example.ph", phone: "0921 555 0505", createdAt: iso(now - 2 * DAY) }
+  const lead2: DCustomer = { id: sid(), profileId: null, companyId: null, fullName: "Grace Lim", email: "grace@limfoods.demo", phone: "0922 555 0606", createdAt: iso(now - 0.3 * DAY) }
+  const ramon: DCustomer = { id: sid(), profileId: null, companyId: null, fullName: "Ramon Villanueva", email: "ramon.v@example.ph", phone: "0923 555 0707", createdAt: iso(now - 25 * 60_000) }
   db.customers.push(ana, ben, marco, lgu, lead1, lead2, ramon)
 
   /* fleet */
   const unit = (u: Partial<DFleet> & Pick<DFleet, "customerId" | "model">): DFleet => ({
-    id: randomUUID(),
+    id: sid(),
     companyId: null,
     nickname: null,
     make: "JAC",
@@ -289,7 +294,7 @@ function seed(): DemoDb {
   /* job orders */
   const job = (j: Partial<DJob> & Pick<DJob, "customerId" | "truckModel" | "complaint" | "status">): DJob => {
     const created: DJob = {
-    id: randomUUID(),
+    id: sid(),
     reference: nextReference(db, "JO"),
     bookingId: null,
     fleetUnitId: null,
@@ -314,11 +319,11 @@ function seed(): DemoDb {
   }
   const addEvents = (j: DJob, path: JobStatus[], startMs: number, stepMs: number) => {
     path.forEach((to, i) =>
-      db.jobEvents.push({ id: randomUUID(), jobId: j.id, from: i ? path[i - 1] : null, to, note: null, actorId: i ? ids.rico : ids.jun, at: iso(startMs + i * stepMs), visible: true }),
+      db.jobEvents.push({ id: sid(), jobId: j.id, from: i ? path[i - 1] : null, to, note: null, actorId: i ? ids.rico : ids.jun, at: iso(startMs + i * stepMs), visible: true }),
     )
   }
   const item = (jobId: string, type: DJobItem["type"], description: string, unitPrice: number, quantity = 1) =>
-    db.jobItems.push({ id: randomUUID(), jobId, type, description, quantity, unitPrice })
+    db.jobItems.push({ id: sid(), jobId, type, description, quantity, unitPrice })
 
   // Live job — auto-advances while you watch
   const live = job({
@@ -415,7 +420,7 @@ function seed(): DemoDb {
 
   /* bookings */
   const booking = (b: Partial<DBooking> & Pick<DBooking, "contactName" | "truckModel" | "issue" | "preferredDate" | "status">): DBooking => ({
-    id: randomUUID(),
+    id: sid(),
     reference: nextReference(db, "BK"),
     customerId: null,
     fleetUnitId: null,
@@ -520,7 +525,7 @@ function seed(): DemoDb {
 
   /* quotes */
   const quote = (q: Partial<DQuote> & Pick<DQuote, "type" | "contactName" | "contactEmail" | "status">): DQuote => ({
-    id: randomUUID(),
+    id: sid(),
     reference: nextReference(db, "Q"),
     customerId: null,
     truckSlug: null,
@@ -564,8 +569,8 @@ function seed(): DemoDb {
     branchSlug: "a-bonifacio",
   })
   db.quoteItems.push(
-    { id: randomUUID(), quoteId: q1.id, description: "JAC N90 Box Van 18 ft, 2025 (fleet price)", quantity: 2, unitPrice: 2_098_214.29 },
-    { id: randomUUID(), quoteId: q1.id, description: "Rear liftgate, 1,000 kg", quantity: 2, unitPrice: 89_285.71 },
+    { id: sid(), quoteId: q1.id, description: "JAC N90 Box Van 18 ft, 2025 (fleet price)", quantity: 2, unitPrice: 2_098_214.29 },
+    { id: sid(), quoteId: q1.id, description: "Rear liftgate, 1,000 kg", quantity: 2, unitPrice: 89_285.71 },
   )
   const q2 = quote({
     type: "part",
@@ -618,11 +623,11 @@ function seed(): DemoDb {
     createdAt: iso(now - 45 * DAY),
     respondedAt: iso(now - 44 * DAY),
   })
-  db.quoteItems.push({ id: randomUUID(), quoteId: q5.id, description: "Oil Filter — Cummins ISF 3.8", quantity: 10, unitPrice: 696.43 })
+  db.quoteItems.push({ id: sid(), quoteId: q5.id, description: "Oil Filter — Cummins ISF 3.8", quantity: 10, unitPrice: 696.43 })
   db.quotes.push(q1, q2, q3, q4, q5)
 
   /* notifications */
-  const notify = (n: Omit<DNotification, "id" | "readAt"> & { readAt?: string | null }) => db.notifications.push({ id: randomUUID(), readAt: null, ...n })
+  const notify = (n: Omit<DNotification, "id" | "readAt"> & { readAt?: string | null }) => db.notifications.push({ id: sid(), readAt: null, ...n })
   notify({ recipientId: ids.ana, recipientRole: null, type: "job.ready", title: "Your truck is ready for release", body: `${ready.reference} · N75 · NBC 2041`, link: `/account/jobs/${ready.id}`, createdAt: iso(now - 1.5 * 3600_000) })
   notify({ recipientId: ids.ana, recipientRole: null, type: "quote.quoted", title: "Your quote is ready", body: `${q1.reference} · 2 × JAC N90 Box Van`, link: `/account/quotes/${q1.id}`, createdAt: iso(now - DAY) })
   notify({ recipientId: ids.ana, recipientRole: null, type: "booking.confirmed", title: "Service booking confirmed", body: "T8 Pro · NDE 7781", link: "/account/bookings", createdAt: iso(now - 1.8 * DAY), readAt: iso(now - 1.7 * DAY) })
@@ -633,7 +638,7 @@ function seed(): DemoDb {
 
   for (const j of db.jobs.filter((x) => x.status === "released")) {
     const inv: DInvoice = {
-      id: randomUUID(),
+      id: sid(),
       reference: nextReference(db, "INV"),
       customerId: j.customerId,
       jobId: j.id,
@@ -653,13 +658,13 @@ function seed(): DemoDb {
       createdAt: j.releasedAt ?? iso(now),
     }
     db.invoices.push(inv)
-    for (const it of db.jobItems.filter((i) => i.jobId === j.id)) db.invoiceItems.push({ id: randomUUID(), invoiceId: inv.id, type: it.type, description: it.description, quantity: it.quantity, unitPrice: it.unitPrice })
+    for (const it of db.jobItems.filter((i) => i.jobId === j.id)) db.invoiceItems.push({ id: sid(), invoiceId: inv.id, type: it.type, description: it.description, quantity: it.quantity, unitPrice: it.unitPrice })
   }
   // Truck sales this month (accepted quote → invoice) for the sales KPI
   const sold = db.trucks.find((t) => t.availability === "sold")
   if (sold) {
     const inv: DInvoice = {
-      id: randomUUID(),
+      id: sid(),
       reference: nextReference(db, "INV"),
       customerId: marco.id,
       jobId: null,
@@ -680,10 +685,10 @@ function seed(): DemoDb {
       createdAt: iso(now - 3 * 3600_000),
     }
     db.invoices.push(inv)
-    db.invoiceItems.push({ id: randomUUID(), invoiceId: inv.id, type: "truck", description: sold.title, quantity: 1, unitPrice: Math.round((sold.price ?? 0) / 1.12) })
+    db.invoiceItems.push({ id: sid(), invoiceId: inv.id, type: "truck", description: sold.title, quantity: 1, unitPrice: Math.round((sold.price ?? 0) / 1.12) })
   }
 
-  db.staffNotes.push({ id: randomUUID(), entityType: "job_order", entityId: ready.id, body: "Customer prefers pickup after 4 PM. Call Ana before release.", authorId: ids.jun, createdAt: iso(now - 2 * 3600_000) })
+  db.staffNotes.push({ id: sid(), entityType: "job_order", entityId: ready.id, body: "Customer prefers pickup after 4 PM. Call Ana before release.", authorId: ids.jun, createdAt: iso(now - 2 * 3600_000) })
 
   return db
 }

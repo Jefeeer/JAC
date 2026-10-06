@@ -153,19 +153,19 @@ export function PartQuoteForm({
           {(a) => <TextInput {...a} {...register("plateNumber")} className="font-mono uppercase" placeholder="NAD 6513" autoCapitalize="characters" />}
         </Field>
         <Field label="VIN / chassis no." optional error={e.vin?.message} hint="Helps us confirm fitment.">
-          {(a) => <TextInput {...a} {...register("vin")} className="font-mono uppercase" autoCapitalize="characters" />}
+          {(a) => <TextInput {...a} {...register("vin")} className="font-mono uppercase" autoCapitalize="characters" placeholder="LJ11KBBC8N1000000" />}
         </Field>
         <Field label="Full name" error={e.name?.message}>
-          {(a) => <TextInput {...a} {...register("name")} autoComplete="name" />}
+          {(a) => <TextInput {...a} {...register("name")} autoComplete="name" placeholder="Juan dela Cruz" />}
         </Field>
         <Field label="Company / shop" optional error={e.company?.message}>
-          {(a) => <TextInput {...a} {...register("company")} autoComplete="organization" />}
+          {(a) => <TextInput {...a} {...register("company")} autoComplete="organization" placeholder="e.g. Dela Cruz Auto Supply" />}
         </Field>
         <Field label="Mobile / phone" error={e.phone?.message}>
           {(a) => <TextInput {...a} {...register("phone")} type="tel" autoComplete="tel" placeholder="0917 123 4567" />}
         </Field>
         <Field label="Email" error={e.email?.message}>
-          {(a) => <TextInput {...a} {...register("email")} type="email" autoComplete="email" />}
+          {(a) => <TextInput {...a} {...register("email")} type="email" autoComplete="email" placeholder="you@company.ph" />}
         </Field>
       </div>
 

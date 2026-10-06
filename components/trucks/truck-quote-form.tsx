@@ -103,10 +103,10 @@ export function TruckQuoteForm({ truckSlug, truckTitle, defaultBranch }: { truck
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Full name" error={e.name?.message}>
-          {(a) => <TextInput {...a} {...register("name")} autoComplete="name" />}
+          {(a) => <TextInput {...a} {...register("name")} autoComplete="name" placeholder="Juan dela Cruz" />}
         </Field>
         <Field label="Company" optional error={e.company?.message}>
-          {(a) => <TextInput {...a} {...register("company")} autoComplete="organization" />}
+          {(a) => <TextInput {...a} {...register("company")} autoComplete="organization" placeholder="e.g. Dela Cruz Trucking" />}
         </Field>
         <Field label="Mobile / phone" error={e.phone?.message}>
           {(a) => <TextInput {...a} {...register("phone")} type="tel" autoComplete="tel" placeholder="0917 123 4567" />}
