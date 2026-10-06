@@ -19,8 +19,8 @@
 | --- | --- | --- |
 | 1 | Project setup, design system, JAC branding, layout, home page | ✅ |
 | 2 | Supabase schema, RLS, storage, seed data, DB test suite | ✅ |
-| 3 | Trucks + parts catalog (public) | ⏳ next |
-| 4 | Quote & booking forms + email notifications | ⏳ |
+| 3 | Trucks + parts catalog (public), quote forms, financing calculator | ✅ |
+| 4 | Booking form + email notifications (quote forms shipped in step 3) | ⏳ next |
 | 5 | Auth + customer portal | ⏳ |
 | 6 | Admin panel | ⏳ |
 | 7 | Python service (imports, PDFs, reports, reminders) | ⏳ |
@@ -35,6 +35,10 @@
 ├── app/
 │   ├── (site)/                 # public website (header, footer, sticky breakdown button)
 │   │   ├── page.tsx            # home (ISR, 10 min)
+│   │   ├── trucks/(list)/      # /trucks — search, filters, sort, pagination (dynamic)
+│   │   ├── trucks/[slug]/      # truck detail (SSG + ISR 1 h): gallery, specs, calculator, quote form
+│   │   ├── parts/(list)/       # /parts — part no./name search, fits-my-truck, categories, stock
+│   │   ├── parts/[slug]/       # part detail (SSG + ISR 1 h): fitment, specs, quote form + photo upload
 │   │   ├── credits/            # photo attribution
 │   │   ├── loading.tsx · error.tsx
 │   ├── layout.tsx              # fonts, theme, providers, global metadata
@@ -43,6 +47,9 @@
 │   └── globals.css             # design tokens + signature utilities
 ├── components/
 │   ├── brand/                  # JAC wordmark (SVG paths), channel icons
+│   ├── catalog/                # URL-driven filter forms, search, chips, pagination, stock badge, breadcrumbs
+│   ├── forms/                  # form controls, honeypot, consent, signed-URL photo upload
+│   ├── parts/ · trucks/        # catalog rows/cards, gallery, spec sheet, finance calculator, quote forms
 │   ├── home/                   # hero, stats, featured, lineup, services, tracker, testimonials, branches, contact
 │   ├── layout/                 # header, nav, footer, breakdown button, theme toggle
 │   ├── shared/                 # section heading, truck card, odometer, JSON-LD
@@ -51,10 +58,14 @@
 │   ├── config/                 # site.ts (brand + contact), branches.ts (7 branches + hours)
 │   ├── data/                   # seed-data.ts (sample catalog), testimonials.ts (samples)
 │   ├── supabase/               # server / public / browser / admin (service role, server-only) clients
+│   ├── validation/             # Zod: catalog URL params, quote forms, uploads
 │   ├── format.ts               # ₱ / km / tonnes formatting
 │   └── photo-credits.json
 ├── server/
-│   └── queries/catalog.ts      # catalog reads (Supabase → domain types, sample-data fallback)
+│   ├── actions/quotes.ts       # Server Actions: truck/part quotes, signed upload URLs
+│   ├── queries/catalog.ts      # catalog reads (Supabase → domain types, sample-data fallback)
+│   ├── security/guards.ts      # IP rate limit (Postgres-backed), honeypot + timing check
+│   └── customers.ts            # customer resolution for form submissions
 ├── types/domain.ts             # domain types mirroring the schema
 ├── supabase/
 │   ├── migrations/             # 0100 core schema · 0200 RLS & security · 0300 storage
@@ -85,7 +96,7 @@ The site runs **without Supabase** — catalog queries fall back to the sample d
 | --- | --- |
 | `npm run dev` / `build` / `start` | Next.js |
 | `npm run lint` / `typecheck` | ESLint / `tsc --noEmit` |
-| `npm run db:test` | Applies every migration + seed in PGlite and runs 58 RLS/trigger assertions |
+| `npm run db:test` | Applies every migration + seed in PGlite and runs 59 RLS/trigger assertions |
 | `npm run db:seed:generate` | Regenerates `supabase/seed.sql` from `lib/data/seed-data.ts` |
 | `npm run db:types` | Generates Supabase TS types (requires a linked project) |
 

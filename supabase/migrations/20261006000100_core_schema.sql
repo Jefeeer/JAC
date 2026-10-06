@@ -153,7 +153,9 @@ create table public.customers (
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
-create index customers_email_idx on public.customers (email);
+-- lower() so lookups work from SECURITY DEFINER functions with an empty search_path
+-- (where citext's case-insensitive = operator is not visible).
+create index customers_email_idx on public.customers (lower(email::text));
 create index customers_company_idx on public.customers (company_id);
 create index customers_name_trgm_idx on public.customers using gin (full_name extensions.gin_trgm_ops);
 
@@ -909,7 +911,7 @@ begin
   -- (created earlier from a public quote/booking form), otherwise create one.
   select id into v_customer
     from public.customers
-   where profile_id is null and email = new.email::extensions.citext
+   where profile_id is null and lower(email::text) = lower(new.email)
    order by created_at desc
    limit 1;
 
@@ -917,8 +919,19 @@ begin
     update public.customers set profile_id = new.id where id = v_customer;
   else
     insert into public.customers (profile_id, full_name, email, phone)
-    values (new.id, v_name, new.email, v_phone);
+    values (new.id, v_name, new.email, v_phone)
+    returning id into v_customer;
   end if;
+
+  -- Public forms never attach to an existing account (anyone can type an
+  -- email), so one person may have several unlinked customer rows. Now that
+  -- they've proven ownership of the email, fold those into the linked one.
+  update public.quotes           set customer_id = v_customer where customer_id in (select id from public.customers where profile_id is null and lower(email::text) = lower(new.email));
+  update public.service_bookings set customer_id = v_customer where customer_id in (select id from public.customers where profile_id is null and lower(email::text) = lower(new.email));
+  update public.fleet_units      set customer_id = v_customer where customer_id in (select id from public.customers where profile_id is null and lower(email::text) = lower(new.email));
+  update public.job_orders       set customer_id = v_customer where customer_id in (select id from public.customers where profile_id is null and lower(email::text) = lower(new.email));
+  update public.invoices         set customer_id = v_customer where customer_id in (select id from public.customers where profile_id is null and lower(email::text) = lower(new.email));
+  delete from public.customers where profile_id is null and lower(email::text) = lower(new.email);
 
   return new;
 end;

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "db:seed:generate": "node scripts/generate-seed.ts",
     "db:test": "node supabase/tests/run.mjs",
     "db:types": "supabase gen types typescript --linked --schema public > types/database.generated.ts"

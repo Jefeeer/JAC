@@ -13,6 +13,9 @@ export default async function rlsSuite(db, q) {
   await as("postgres")
   const [pre] = await q(`insert into customers (full_name, email, phone) values ('Ana Cruz','ana@fleet.ph','0917') returning id`)
   await q(`insert into quotes (quote_type, customer_id, contact_name, contact_email, contact_phone, truck_id) select 'truck', '${pre.id}', 'Ana Cruz','ana@fleet.ph','0917', id from trucks limit 1`)
+  // a second anonymous submission with the same email creates a separate unlinked customer
+  const [pre2] = await q(`insert into customers (full_name, email, phone) values ('Ana','ANA@fleet.ph','0917') returning id`)
+  await q(`insert into quotes (quote_type, customer_id, contact_name, contact_email, contact_phone) values ('part', '${pre2.id}', 'Ana','ana@fleet.ph','0917')`)
   const [ua] = await q(`insert into auth.users (email, raw_user_meta_data) values ('ana@fleet.ph', '{"full_name":"Ana Cruz"}') returning id`)
   const [ub] = await q(`insert into auth.users (email) values ('ben@haul.ph') returning id`)
   const [uadm] = await q(`insert into auth.users (email) values ('admin@jac.ph') returning id`)
@@ -23,7 +26,8 @@ export default async function rlsSuite(db, q) {
   await q(`update profiles set role='service_advisor' where id='${uadv.id}'`)
   const [ca] = await q(`select id from customers where profile_id='${ua.id}'`)
   const [cb] = await q(`select id from customers where profile_id='${ub.id}'`)
-  ok("signup links pre-existing customer by email", ca?.id === pre.id)
+  ok("signup links a pre-existing customer by email", ca?.id === pre.id || ca?.id === pre2.id)
+  ok("duplicate unlinked customers merged away", (await n(`select count(*) n from customers where lower(email::text)='ana@fleet.ph'`)) === 1)
   ok("signup creates customer when none exists", !!cb)
 
   // --- anon
@@ -42,7 +46,7 @@ export default async function rlsSuite(db, q) {
 
   // --- customer A
   await as("authenticated", ua.id)
-  ok("A sees own pre-signup quote", (await n(`select count(*) n from quotes`)) === 1)
+  ok("A sees both pre-signup quotes (merged on signup)", (await n(`select count(*) n from quotes`)) === 2)
   ok("A sees only own customer row", (await n(`select count(*) n from customers`)) === 1)
   ok("A cannot see unpublished truck", (await n(`select count(*) n from trucks`)) === 14)
   ok("A cannot escalate role", !!(await tryq(`update profiles set role='admin' where id='${ua.id}'`)).error)
