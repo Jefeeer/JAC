@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next"
 import { Archivo, Big_Shoulders, JetBrains_Mono } from "next/font/google"
 import { Providers } from "@/components/providers"
 import { siteConfig } from "@/lib/config/site"
+import { DEMO_MODE } from "@/lib/demo/accounts"
 import "./globals.css"
 
 const shoulders = Big_Shoulders({
@@ -54,6 +55,8 @@ export const metadata: Metadata = {
   },
   twitter: { card: "summary_large_image" },
   formatDetection: { telephone: false },
+  // sample data must not end up in search results
+  ...(DEMO_MODE ? { robots: { index: false, follow: false } } : {}),
 }
 
 export const viewport: Viewport = {
