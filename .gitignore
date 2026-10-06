@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.example
+# committed on request: currently only NEXT_PUBLIC_DEMO_MODE=1 (no secrets).
+# Never put real keys here — set them in Vercel / Railway instead.
+!.env.local
 
 # vercel
 .vercel
