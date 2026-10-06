@@ -2,7 +2,6 @@
 
 import { useEffect, useId, useRef, useState } from "react"
 import { CameraIcon, LoaderIcon, TriangleAlertIcon, XIcon } from "lucide-react"
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
 import { ALLOWED_UPLOAD_TYPES, MAX_UPLOADS, MAX_UPLOAD_BYTES } from "@/lib/validation/quote"
 import { createUploadTargets } from "@/server/actions/uploads"
@@ -61,6 +60,8 @@ export function PhotoUpload({
       return
     }
 
+    // loaded on demand so the Supabase client stays out of the page bundle
+    const { getSupabaseBrowserClient } = await import("@/lib/supabase/browser")
     const supabase = getSupabaseBrowserClient()
     await Promise.all(
       pending.map(async (item, idx) => {

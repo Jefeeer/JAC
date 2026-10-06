@@ -2,17 +2,31 @@
 
 import { useState, useTransition } from "react"
 import { CheckIcon, LoaderIcon } from "lucide-react"
+import { useConfirm } from "@/components/shared/confirm"
 import { updateMileage } from "@/server/actions/portal"
 
 export function MileageUpdate({ id, current }: { id: string; current: number }) {
   const [km, setKm] = useState("")
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [pending, start] = useTransition()
+  const confirm = useConfirm()
 
   return (
     <form
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault()
+        const next = Number(km.replace(/,/g, ""))
+        const ok = await confirm({
+          title: "Update odometer?",
+          description: next < current ? "This is lower than the reading on file — double-check before saving." : "Your next service reminder is recalculated from this reading.",
+          tone: next < current ? "danger" : "default",
+          details: [
+            ["On file", `${current.toLocaleString("en-PH")} km`],
+            ["New", `${next.toLocaleString("en-PH")} km`],
+          ],
+          confirmLabel: "Save reading",
+        })
+        if (!ok) return
         start(async () => {
           const res = await updateMileage({ id, km })
           setMsg(res.ok ? { ok: true, text: "Odometer updated" } : { ok: false, text: res.error })

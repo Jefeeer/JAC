@@ -8,6 +8,7 @@ import type { z } from "zod"
 import { LoaderIcon } from "lucide-react"
 import { Field, NativeSelect, TextArea, TextInput } from "@/components/forms/controls"
 import { btn } from "@/components/admin/ui"
+import { useConfirm } from "@/components/shared/confirm"
 import { branches } from "@/lib/config/branches"
 import { BODY_TYPES, truckSchema, type TruckForm as TruckFormValues } from "@/lib/validation/admin"
 import { saveTruckAction } from "@/server/actions/admin"
@@ -25,6 +26,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 export function TruckEditor({ initial }: { initial?: TruckFormValues }) {
   const router = useRouter()
   const [pending, start] = useTransition()
+  const confirm = useConfirm()
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const { register, handleSubmit, formState, setError, getValues } = useForm<TruckFormValues, unknown, z.output<typeof truckSchema>>({
     resolver: zodResolver(truckSchema),
@@ -32,7 +34,19 @@ export function TruckEditor({ initial }: { initial?: TruckFormValues }) {
   })
   const e = formState.errors as Record<string, { message?: string } | undefined>
 
-  const submit = handleSubmit(() =>
+  const submit = handleSubmit(async () => {
+    const v = getValues()
+    const ok = await confirm({
+      title: initial?.id ? "Save changes to this truck?" : "Create this truck listing?",
+      description: initial?.id ? "Live listings update on the website right away." : "It starts as a draft — add photos, then publish.",
+      details: [
+        ["Title", String(v.title ?? "")],
+        ["Price", v.priceOnRequest ? "On request" : v.price ? `₱${String(v.price)}` : "—"],
+        ["Status", String(v.availability ?? "")],
+      ],
+      confirmLabel: initial?.id ? "Save changes" : "Create truck",
+    })
+    if (!ok) return
     start(async () => {
       setMsg(null)
       // send raw inputs — the server action re-validates with the same schema
@@ -45,8 +59,8 @@ export function TruckEditor({ initial }: { initial?: TruckFormValues }) {
       setMsg({ ok: true, text: "Saved" })
       if (!initial?.id) router.push(`/admin/trucks/${res.data?.id}`)
       router.refresh()
-    }),
-  )
+    })
+  })
 
   const T = (name: keyof TruckFormValues, label: string, opts: { optional?: boolean; hint?: string; mono?: boolean; placeholder?: string; span?: boolean; numeric?: boolean } = {}) => (
     <Field label={label} optional={opts.optional} hint={opts.hint} error={e[name]?.message} className={opts.span ? "sm:col-span-2 xl:col-span-3" : undefined}>

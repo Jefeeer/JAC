@@ -63,7 +63,7 @@ export default async function AdminBookingPage(props: PageProps<"/admin/bookings
         <div className="grid content-start gap-6 [&>*]:min-w-0">
           {can(role, "bookings.write") ? (
             <Panel title="Actions" bodyClassName="p-5">
-              <BookingActions id={b.id} status={b.status} defaultWhen={defaultWhen} mechanics={mechanics} canConvert={!b.jobId} />
+              <BookingActions id={b.id} status={b.status} defaultWhen={defaultWhen} mechanics={mechanics} canConvert={!b.jobId} label={`${b.reference} · ${b.contactName}`} />
             </Panel>
           ) : null}
           <Panel title="Request" bodyClassName="grid gap-5 p-5">

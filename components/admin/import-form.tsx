@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { CheckCircle2Icon, DownloadIcon, LoaderIcon, UploadIcon } from "lucide-react"
 import { btn } from "@/components/admin/ui"
+import { useConfirm } from "@/components/shared/confirm"
 import { importPartsAction } from "@/server/actions/admin"
 
 const TEMPLATE = `part_number,name,category,price,stock_qty,reorder_level,oem_number,brand,unit,compatible_models,summary
@@ -12,14 +13,28 @@ JAC-3502090-N,Rear Brake Shoe Set — N-Series,brakes,3950,18,6,,JAC Genuine,axl
 
 export function ImportForm({ viaService }: { viaService: boolean }) {
   const [pending, start] = useTransition()
+  const confirm = useConfirm()
   const [result, setResult] = useState<{ ok: boolean; text: string; skipped?: string[] } | null>(null)
 
   return (
     <div className="grid gap-5">
       <form
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault()
           const fd = new FormData(e.currentTarget)
+          const file = fd.get("file") as File | null
+          if (!file?.name) return
+          const ok = await confirm({
+            title: "Import this price list?",
+            description: "Existing part numbers are updated (price, stock, fitment) and new ones are added and published. This can't be undone in one step.",
+            details: [
+              ["File", file.name],
+              ["Size", `${Math.max(1, Math.round(file.size / 1024))} KB`],
+            ],
+            tone: "danger",
+            confirmLabel: "Import & upsert",
+          })
+          if (!ok) return
           start(async () => {
             setResult(null)
             const res = await importPartsAction(fd)

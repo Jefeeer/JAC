@@ -1,5 +1,6 @@
 "use client"
 
+import { useConfirm } from "@/components/shared/confirm"
 import { useEffect, useState, useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -42,7 +43,21 @@ export function TruckQuoteForm({ truckSlug, truckTitle, defaultBranch }: { truck
   // Timestamp for the bot timing check — set after mount, never during render.
   useEffect(() => setValue("startedAt", Date.now()), [setValue])
 
-  const onSubmit = handleSubmit((values) => {
+  const confirm = useConfirm()
+  const onSubmit = handleSubmit(async (values) => {
+    const ok = await confirm({
+      title: "Request a quotation?",
+      description: "A JAC Motors sales consultant will send pricing and contact you, usually within one business day.",
+      icon: "send",
+      details: [
+        ["Truck", truckTitle],
+        ...(attach && estimate ? ([["Financing", "Estimate attached"]] as [string, string][]) : []),
+        ...(tradeIn ? ([["Trade-in", "Details attached"]] as [string, string][]) : []),
+        ["Contact", `${values.name} · ${values.phone}`],
+      ],
+      confirmLabel: "Send request",
+    })
+    if (!ok) return
     setServerError(null)
     startTransition(async () => {
       const result = await submitTruckQuote({

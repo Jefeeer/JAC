@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
       ? [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }]
       : [],
   },
+  // OG images read photos from /public and fonts from /assets at runtime.
+  outputFileTracingIncludes: {
+    // route keys are globs; dynamic OG routes get a hashed suffix
+    "/**/opengraph-image*": ["./assets/og/**", "./public/images/**"],
+    "/opengraph-image*": ["./assets/og/**", "./public/images/**"],
+  },
   experimental: {
     // Vercel caps request bodies at 4.5 MB; customer photos upload straight to
     // Supabase Storage via signed upload URLs, so actions only carry form fields.

@@ -1,4 +1,7 @@
 import { z } from "zod"
+import { PART_SORTS, PAYLOAD_BANDS, TRUCK_SORTS } from "@/lib/catalog-options"
+
+export { PART_SORTS, PART_SORT_LABELS, PAYLOAD_BANDS, TRUCK_SORTS, TRUCK_SORT_LABELS } from "@/lib/catalog-options"
 
 /**
  * URL search-param schemas for the public catalog. Every param is optional
@@ -31,24 +34,7 @@ const flag = z.preprocess((v) => first(v) === "1" || first(v) === "true", z.bool
 
 /* ---------------------------------- Trucks --------------------------------- */
 
-export const TRUCK_SORTS = ["newest", "price-asc", "price-desc", "payload-asc", "payload-desc", "year-desc"] as const
-export const TRUCK_SORT_LABELS: Record<(typeof TRUCK_SORTS)[number], string> = {
-  newest: "Newest listings",
-  "price-asc": "Price: low to high",
-  "price-desc": "Price: high to low",
-  "payload-asc": "Payload: light to heavy",
-  "payload-desc": "Payload: heavy to light",
-  "year-desc": "Year: newest first",
-}
 
-/** Payload bands shown as chips; value is "min-max" in tonnes. */
-export const PAYLOAD_BANDS = [
-  { value: "0-1.5", label: "Up to 1.5 T", hint: "Pickups" },
-  { value: "1.5-3.5", label: "1.5 – 3.5 T", hint: "Light duty" },
-  { value: "3.5-6", label: "3.5 – 6 T", hint: "Medium" },
-  { value: "6-12", label: "6 – 12 T", hint: "Medium-heavy" },
-  { value: "12-40", label: "12 T +", hint: "Heavy haul" },
-] as const
 
 export const truckFiltersSchema = z.object({
   q: str(60),
@@ -85,14 +71,6 @@ export function payloadRange(band: string | undefined): [number, number] | null 
 
 /* ----------------------------------- Parts --------------------------------- */
 
-export const PART_SORTS = ["relevance", "name", "price-asc", "price-desc", "part-number"] as const
-export const PART_SORT_LABELS: Record<(typeof PART_SORTS)[number], string> = {
-  relevance: "Best match",
-  name: "Name A–Z",
-  "price-asc": "Price: low to high",
-  "price-desc": "Price: high to low",
-  "part-number": "Part number",
-}
 
 export const partFiltersSchema = z.object({
   q: str(60),

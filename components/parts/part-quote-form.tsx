@@ -1,5 +1,6 @@
 "use client"
 
+import { useConfirm } from "@/components/shared/confirm"
 import { useCallback, useEffect, useState, useTransition } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -58,7 +59,20 @@ export function PartQuoteForm({
   useEffect(() => setValue("startedAt", Date.now()), [setValue])
   const onPhotos = useCallback((paths: string[]) => setValue("photoPaths", paths), [setValue])
 
-  const onSubmit = handleSubmit((values) => {
+  const confirm = useConfirm()
+  const onSubmit = handleSubmit(async (values) => {
+    const ok = await confirm({
+      title: "Send this parts enquiry?",
+      description: "Our parts counter replies with price and availability, usually within one business day.",
+      icon: "send",
+      details: [
+        ["Part", `${partName} (${partNumber})`],
+        ["Quantity", `${values.quantity} ${unit}`],
+        ["Contact", `${values.name} · ${values.phone}`],
+      ],
+      confirmLabel: "Send enquiry",
+    })
+    if (!ok) return
     setServerError(null)
     startTransition(async () => {
       const result = await submitPartQuote(values)

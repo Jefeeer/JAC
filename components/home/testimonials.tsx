@@ -46,7 +46,7 @@ export function Testimonials() {
 
               <span
                 aria-hidden
-                className="absolute right-6 bottom-7 rotate-[-10deg] rounded-[3px] border-2 border-brand/60 px-2 py-0.5 font-wide text-[11px] font-black tracking-[0.2em] text-brand/70 uppercase mix-blend-multiply dark:mix-blend-screen"
+                className="absolute right-6 bottom-7 rotate-[-10deg] rounded-[3px] border-2 border-brand px-2 py-0.5 font-wide text-[11px] font-black tracking-[0.2em] text-brand-ink uppercase"
               >
                 Released
               </span>

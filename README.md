@@ -24,7 +24,7 @@
 | 5 | Auth (magic link + code) + customer portal, demo mode | ✅ |
 | 6 | Admin panel: role-based dashboard, job board, bookings, quotes + PDF, trucks, parts + import, customers | ✅ |
 | 7 | Python service: CSV/Excel import, ReportLab PDFs, sales + inventory reports, daily PMS reminders — see `python-service/README.md` | ✅ |
-| 8 | SEO, performance pass, deployment docs | ⏳ next |
+| 8 | SEO (sitemap, robots, OG images, JSON-LD), performance + a11y pass, confirmation dialogs, deployment docs | ✅ |
 
 ---
 
@@ -235,6 +235,70 @@ The UI hides what a role can’t do (`server/admin/permissions.ts`), and RLS enf
 - **Signature details:** roll-up "shutter" CTAs, riveted data-plate truck cards, weighbridge payload chart, departure-board branch list with live open/closed state, odometer counters, waybill testimonials, looping job-order tracker demo.
 - **Theme:** dark by default, light mode via toggle / system; tokens in `app/globals.css`.
 - **Accessibility:** skip link, visible focus rings, `prefers-reduced-motion` respected, semantic landmarks, AA contrast on text tokens.
+
+---
+
+## Confirmations
+
+Every action that signs someone in or out, sends something, or changes data asks first. This covers demo sign-in, sending a sign-in link, sign-out, every form submit, status changes, publishing, stock edits, photo edits, imports and deletes. The confirmation is a branded dialog that shows the key facts of the action (booking reference, from → to status, totals, file name and so on).
+
+- Client code: `const confirm = useConfirm(); if (!(await confirm({ title, description, details, tone })) ) return`
+- Server-rendered forms: wrap the button in `<ConfirmSubmitButton confirm={…}>`
+- Both live in `components/shared/confirm.tsx`. The provider is mounted once in `components/providers.tsx`.
+- Client-side validation runs **before** the dialog, so people only confirm valid submissions. Server Actions still re-validate everything.
+- Exception: the 6-digit sign-in code step does not ask again, because sending the link was already confirmed.
+
+---
+
+## SEO & performance
+
+- **Metadata:** title template, canonical URL on every public page, and `noindex` on `/account`, `/admin` and `/login`.
+- **Structured data:** `AutoDealer` with all 7 branches (home and contact), `Vehicle`/`Product` + `Offer` (truck pages), `Product` (part pages), `Service` list and FAQ.
+- **`/sitemap.xml`:** static pages, part categories, and every published truck and part (reads Supabase, falls back to the sample catalog). Revalidates hourly.
+- **`/robots.txt`:** blocks private areas and sort/page permutations. On preview deployments (`VERCEL_ENV` other than production) it disallows everything.
+- **Open Graph images (`next/og`):** a site default, plus per-truck (photo, specs, price) and per-part (part number, fitment, price) images. Fonts are vendored as WOFF in `assets/og/`, and photos are transcoded with `sharp` because Satori can't read WebP.
+- **`/manifest.webmanifest`:** installable, with shortcuts to the breakdown hotline, Book Service and My account.
+- **Rendering:** catalog and content pages use ISR (`revalidate`). Admin edits call `revalidatePath` so changes go live immediately.
+- **Performance fixes from the Lighthouse pass:**
+  - The grain overlay is a pre-rendered noise tile; an SVG turbulence filter was being re-rasterised on every animation frame.
+  - The hero lane animation uses `transform` instead of `background-position`.
+  - The mono font is not preloaded.
+  - Zod is kept out of the catalog bundle (option lists live in `lib/catalog-options.ts`).
+  - The Supabase browser client is loaded only when a photo is uploaded.
+- **Accessibility:** AA contrast on small labels, named controls, logo link text matches its visible label, and dialogs trap focus and close on Esc.
+
+---
+
+## Deploying
+
+### 1. Supabase (database, auth, storage)
+1. Create the project in **Singapore (ap-southeast-1)**, the closest region to the Philippines.
+2. Apply the migrations and (optionally) the seed data. See [Supabase setup](#supabase-setup).
+3. **Auth → URL configuration:** set Site URL to `https://YOUR-DOMAIN`. Add redirect URLs `https://YOUR-DOMAIN/auth/confirm` and `https://*-YOUR-TEAM.vercel.app/auth/confirm` (for previews).
+4. **Auth → Email templates → Magic link:** paste `supabase/templates/magic-link.html`.
+5. **Auth → SMTP:** use Resend's SMTP so sign-in emails come from your domain.
+6. Create the two database webhooks (see [Notifications → Setup](#setup)).
+
+### 2. Next.js app on Vercel
+1. Import the GitHub repo, framework **Next.js**, root directory `/`.
+2. Add the environment variables from `.env.example` for **Production** and **Preview**:
+   - **Required:** `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`, `STAFF_NOTIFY_EMAILS`, `SUPABASE_WEBHOOK_SECRET`, `REVALIDATE_SECRET`
+   - **Optional:** `TWILIO_*`, `PYTHON_SERVICE_URL` + `PYTHON_SERVICE_SECRET`, and the `NEXT_PUBLIC_*` contact numbers
+   - **Do not set** `NEXT_PUBLIC_DEMO_MODE` in production. Use it only for a separate demo deployment, and then also set `DEMO_SECRET`.
+3. Set the function region to **Singapore (sin1)** in Project Settings → Functions, next to the database.
+4. Add your domain and point DNS at Vercel. Then update `NEXT_PUBLIC_SITE_URL` and the Supabase Site URL to match.
+5. After the first deploy, submit `https://YOUR-DOMAIN/sitemap.xml` in Google Search Console. Also check the OG preview with the Facebook Sharing Debugger, since most of your traffic comes from the Facebook page.
+
+### 3. Python service on Railway or Render
+See [`python-service/README.md`](python-service/README.md). In short: deploy the `python-service/` folder with its Dockerfile, set `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SERVICE_SHARED_SECRET`, `RESEND_API_KEY` and `SITE_URL`, enable the scheduler on **one** instance, and copy its URL and secret into Vercel as `PYTHON_SERVICE_URL` / `PYTHON_SERVICE_SECRET`.
+
+### Launch checklist
+- [ ] Every `CONFIRM` item below has been signed off and the env vars updated
+- [ ] Real truck and part data imported (admin → Parts → Import CSV), photos uploaded and published
+- [ ] An admin account created (see [Make yourself an admin](#4-make-yourself-an-admin)) and staff invited with their roles
+- [ ] Test end to end on production: quote → staff email, booking → confirm → customer email/SMS, job status → live portal, quote PDF, invoice PDF
+- [ ] Resend domain verified (SPF/DKIM) and webhooks returning 200 (Supabase → Webhooks → logs)
+- [ ] `npm run db:test` passes against the migrations you applied
 
 ---
 

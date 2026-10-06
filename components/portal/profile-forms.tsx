@@ -1,5 +1,6 @@
 "use client"
 
+import { useConfirm } from "@/components/shared/confirm"
 import { useState, useTransition } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -33,17 +34,19 @@ export function ProfileForm({ initial, email }: { initial: z.input<typeof profil
   const [pending, start] = useTransition()
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const confirm = useConfirm()
   const { register, handleSubmit, formState } = useForm<z.input<typeof profileSchema>>({ resolver: zodResolver(profileSchema), defaultValues: initial })
   return (
     <form
-      onSubmit={handleSubmit((v) =>
+      onSubmit={handleSubmit(async (v) => {
+        if (!(await confirm({ title: "Save your profile?", description: "Your name and phone are used on bookings, quotes and job updates.", confirmLabel: "Save profile" }))) return
         start(async () => {
           setSaved(false)
           const res = await updateProfile(v)
           if (res.ok) setSaved(true)
           else setError(res.error)
-        }),
-      )}
+        })
+      })}
       className="grid gap-5"
       noValidate
     >
@@ -67,19 +70,21 @@ export function CompanyForm({ initial, exists }: { initial: z.input<typeof compa
   const [pending, start] = useTransition()
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const confirm = useConfirm()
   const { register, handleSubmit, formState } = useForm<z.input<typeof companySchema>>({ resolver: zodResolver(companySchema), defaultValues: initial })
   const e = formState.errors
   return (
     <form
-      onSubmit={handleSubmit((v) =>
+      onSubmit={handleSubmit(async (v) => {
+        if (!(await confirm({ title: "Save company details?", description: "These appear on your quotations and invoices (bill-to name, TIN, address).", confirmLabel: "Save company" }))) return
         start(async () => {
           setSaved(false)
           setError(null)
           const res = await saveCompany(v)
           if (res.ok) setSaved(true)
           else setError(res.error)
-        }),
-      )}
+        })
+      })}
       className="grid gap-5"
       noValidate
     >

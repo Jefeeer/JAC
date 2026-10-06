@@ -44,7 +44,6 @@ export async function generateMetadata(props: PageProps<"/trucks/[slug]">): Prom
       title: `${title} | JAC Motors`,
       description,
       type: "website",
-      images: truck.images[0] ? [{ url: truck.images[0].url, width: truck.images[0].width ?? undefined, height: truck.images[0].height ?? undefined, alt: truck.images[0].alt }] : undefined,
     },
   }
 }

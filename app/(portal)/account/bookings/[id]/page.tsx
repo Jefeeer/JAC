@@ -111,7 +111,7 @@ export default async function BookingDetailPage(props: PageProps<"/account/booki
               </a>
             </div>
           ) : null}
-          {cancellable ? <CancelBooking id={b.id} /> : null}
+          {cancellable ? <CancelBooking id={b.id} reference={b.reference} /> : null}
         </aside>
       </div>
     </>

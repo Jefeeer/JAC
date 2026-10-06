@@ -31,7 +31,7 @@ export async function generateMetadata(props: PageProps<"/parts/[slug]">): Promi
     title: `${part.name} · ${part.partNumber}`,
     description,
     alternates: { canonical: `/parts/${part.slug}` },
-    openGraph: { title: `${part.name} · ${part.partNumber} | JAC Motors`, description, images: part.imageUrl ? [{ url: part.imageUrl }] : undefined },
+    openGraph: { title: `${part.name} · ${part.partNumber} | JAC Motors`, description },
   }
 }
 

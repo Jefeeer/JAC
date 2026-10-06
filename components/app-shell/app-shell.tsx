@@ -2,6 +2,7 @@ import Link from "next/link"
 import { ArrowUpRightIcon, LogOutIcon, PhoneCallIcon } from "lucide-react"
 import { JacMark } from "@/components/brand/logo"
 import { DemoToolbar } from "@/components/demo/demo-toolbar"
+import { ConfirmSubmitButton } from "@/components/shared/confirm"
 import { ThemeToggle } from "@/components/layout/theme-toggle"
 import { LiveModeProvider } from "@/components/portal/live-mode"
 import { NotificationBell } from "@/components/portal/notification-bell"
@@ -68,9 +69,13 @@ export function AppShell({
       </Link>
       <ThemeToggle className="size-9 border-white/10 text-concrete/70 hover:border-white/30 hover:text-white" />
       <form action={signOut}>
-        <button type="submit" className="grid size-9 place-items-center rounded-sm border border-white/10 text-concrete/70 hover:border-white/30 hover:text-white" aria-label="Sign out">
+        <ConfirmSubmitButton
+          confirm={{ title: "Sign out?", description: "You'll need a new sign-in link (or demo account) to come back.", confirmLabel: "Sign out", icon: "logout" }}
+          className="grid size-9 place-items-center rounded-sm border border-white/10 text-concrete/70 hover:border-white/30 hover:text-white"
+        >
           <LogOutIcon className="size-4" />
-        </button>
+          <span className="sr-only">Sign out</span>
+        </ConfirmSubmitButton>
       </form>
     </div>
   )

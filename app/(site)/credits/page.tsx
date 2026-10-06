@@ -5,6 +5,7 @@ import credits from "@/lib/photo-credits.json"
 export const metadata: Metadata = {
   title: "Photo credits",
   description: "Attribution for photography used on the JAC Motors website.",
+  alternates: { canonical: "/credits" },
 }
 
 export default function CreditsPage() {

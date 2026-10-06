@@ -75,7 +75,7 @@ export default async function AdminTrucksPage(props: PageProps<"/admin/trucks">)
                 <Td className="text-xs capitalize">{t.availability}</Td>
                 <Td className="text-right font-mono text-xs">{priceLabel(t)}</Td>
                 <Td>
-                  <PublishToggle kind="truck" id={t.id} published={t.isPublished} />
+                  <PublishToggle kind="truck" id={t.id} published={t.isPublished} name={t.title} />
                 </Td>
               </tr>
             ))}

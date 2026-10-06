@@ -45,7 +45,7 @@ export function MobileNav() {
                     aria-current={active ? "page" : undefined}
                     className="group flex items-baseline gap-4 py-4"
                   >
-                    <span className="font-mono text-xs text-concrete/40">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="font-mono text-xs text-concrete/65">{String(i + 1).padStart(2, "0")}</span>
                     <span
                       className={cn(
                         "font-display text-4xl font-extrabold uppercase transition-colors group-hover:text-brand-ink",

@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { BranchBoard } from "@/components/home/branch-board"
 import { ContactStrip } from "@/components/home/contact-strip"
 import { FeaturedTrucks } from "@/components/home/featured-trucks"
@@ -14,6 +15,8 @@ import { getFeaturedTrucks, getLineup } from "@/server/queries/catalog"
 
 // ISR: refresh featured stock every 10 minutes (admin publishes also revalidate on demand).
 export const revalidate = 600
+
+export const metadata: Metadata = { alternates: { canonical: "/" } }
 
 export default async function HomePage() {
   const [featured, lineup] = await Promise.all([getFeaturedTrucks(4), getLineup()])

@@ -1,5 +1,6 @@
 "use client"
 
+import { useConfirm } from "@/components/shared/confirm"
 import { useCallback, useEffect, useState, useTransition } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -102,7 +103,26 @@ export function BookingForm({
 
   const onPhotos = useCallback((paths: string[]) => setValue("photoPaths", paths), [setValue])
 
-  const onSubmit = handleSubmit((values) => {
+  const confirm = useConfirm()
+  const onSubmit = handleSubmit(async (values) => {
+    const svc = services.find((s) => s.slug === values.serviceSlug)
+    const ok = await confirm({
+      title: values.isBreakdown ? "Send breakdown request?" : "Request this service slot?",
+      description: values.isBreakdown
+        ? "A service advisor is alerted immediately and will call you back. For anything urgent, call the 24/7 line too."
+        : "A service advisor confirms the slot by phone or email — usually within the same business day.",
+      tone: values.isBreakdown ? "danger" : "default",
+      icon: "send",
+      details: [
+        ["Truck", [values.truckMake, values.truckModel, values.plateNumber].filter(Boolean).join(" ")],
+        ["Service", svc?.name ?? (values.isBreakdown ? "Breakdown / roadside" : "General check")],
+        ["Branch", branches.find((b) => b.slug === values.branch)?.name ?? values.branch],
+        ["When", `${values.preferredDate} · ${TIME_SLOT_OPTIONS.find((t) => t.value === values.timeSlot)?.label ?? values.timeSlot}`],
+        ["Contact", `${values.name} · ${values.phone}`],
+      ],
+      confirmLabel: values.isBreakdown ? "Send request" : "Book slot",
+    })
+    if (!ok) return
     setServerError(null)
     startTransition(async () => {
       const result = await submitBooking(values)

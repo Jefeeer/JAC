@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { ConfirmSubmitButton } from "@/components/shared/confirm"
 import { CalendarPlusIcon, PencilIcon, Trash2Icon } from "lucide-react"
 import { FleetForm } from "@/components/portal/fleet-form"
 import { MileageUpdate } from "@/components/portal/mileage-update"
@@ -160,9 +161,19 @@ export default async function FleetUnitPage(props: PageProps<"/account/fleet/[id
           {unit.notes ? <p className="mt-2 whitespace-pre-line text-muted-foreground">{unit.notes}</p> : null}
         </dl>
         <form action={remove} className="self-end justify-self-start sm:justify-self-end">
-          <button type="submit" className="inline-flex h-10 items-center gap-2 rounded-sm border border-border px-4 text-sm text-muted-foreground hover:border-destructive hover:text-destructive">
+          <ConfirmSubmitButton
+            confirm={{
+              title: "Remove this truck?",
+              description: "It disappears from your fleet and maintenance reminders stop. Past job orders stay on record with JAC Motors.",
+              details: [["Truck", [unit.nickname ?? unit.model, unit.plateNumber].filter(Boolean).join(" · ")]],
+              tone: "danger",
+              icon: "delete",
+              confirmLabel: "Remove truck",
+            }}
+            className="inline-flex h-10 items-center gap-2 rounded-sm border border-border px-4 text-sm text-muted-foreground hover:border-destructive hover:text-destructive"
+          >
             <Trash2Icon className="size-4" /> Remove from fleet
-          </button>
+          </ConfirmSubmitButton>
         </form>
       </section>
     </>

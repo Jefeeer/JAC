@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { CheckIcon, FileTextIcon, LoaderIcon, PlusIcon, SendIcon, Trash2Icon } from "lucide-react"
 import { btn } from "@/components/admin/ui"
+import { useConfirm, type ConfirmOptions } from "@/components/shared/confirm"
 import { formatPeso } from "@/lib/format"
 import { generateQuotePdfAction, saveQuoteAction, setQuoteStatusAction } from "@/server/actions/admin"
 import type { QuoteStatus } from "@/types/domain"
@@ -38,6 +39,7 @@ export function QuoteEditor({
   const [pick, setPick] = useState("")
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [pending, start] = useTransition()
+  const confirm = useConfirm()
 
   const num = (s: string) => Number(String(s).replace(/[,₱\s]/g, "")) || 0
   const totals = useMemo(() => {
@@ -57,13 +59,16 @@ export function QuoteEditor({
     assignedTo: assignedTo || null,
   })
 
-  const act = (fn: () => Promise<{ ok: boolean; error?: string }>, okText: string) =>
+  const act = async (ask: ConfirmOptions, fn: () => Promise<{ ok: boolean; error?: string }>, okText: string) => {
+    if (!(await confirm(ask))) return
     start(async () => {
       setMsg(null)
       const res = await fn()
       setMsg(res.ok ? { ok: true, text: okText } : { ok: false, text: res.error ?? "Something went wrong" })
       if (res.ok) router.refresh()
     })
+  }
+  const totalLine = (): [string, string] => ["Total (VAT incl.)", formatPeso(totals.total, { cents: true })]
 
   const field = "h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-brand focus-visible:ring-3 focus-visible:ring-brand/20"
   const editable = !["accepted", "rejected", "closed", "expired"].includes(status)
@@ -186,18 +191,28 @@ export function QuoteEditor({
       <div className="flex flex-wrap items-center gap-2 border-t border-border pt-5">
         {editable ? (
           <>
-            <button type="button" disabled={pending} onClick={() => act(() => saveQuoteAction(payload()), "Draft saved")} className={btn.outline}>
+            <button type="button" disabled={pending} onClick={() => act({ title: "Save draft?", description: "Saved for staff only — the customer isn't notified.", details: [totalLine()], confirmLabel: "Save draft" }, () => saveQuoteAction(payload()), "Draft saved")} className={btn.outline}>
               {pending ? <LoaderIcon className="size-4 animate-spin" /> : null} Save draft
             </button>
             <button
               type="button"
               disabled={pending}
               onClick={() =>
-                act(async () => {
+                act(
+                  {
+                    title: status === "quoted" ? "Update and resend the quote?" : "Send this quote to the customer?",
+                    description: "The customer gets an email and can view and download the quotation in their portal.",
+                    details: [["Lines", String(payload().items.length)], ...(num(discount) ? ([["Discount", formatPeso(num(discount))]] as [string, string][]) : []), totalLine(), ["Valid until", validUntil || "—"]],
+                    confirmLabel: status === "quoted" ? "Update & resend" : "Send quote",
+                    icon: "send",
+                  },
+                  async () => {
                   const saved = await saveQuoteAction(payload())
                   if (!saved.ok) return saved
                   return setQuoteStatusAction(id, "quoted")
-                }, "Quote sent to the customer")
+                  },
+                  "Quote sent to the customer",
+                )
               }
               className={btn.primary}
             >
@@ -208,7 +223,8 @@ export function QuoteEditor({
         <button
           type="button"
           disabled={pending}
-          onClick={() =>
+          onClick={async () => {
+            if (!(await confirm({ title: "Generate the PDF?", description: editable ? "Current edits are saved first, then a branded quotation PDF opens in a new tab." : "A branded quotation PDF opens in a new tab.", details: [totalLine()], confirmLabel: "Generate PDF", icon: "check" }))) return
             start(async () => {
               setMsg(null)
               const saved = editable ? await saveQuoteAction(payload()) : { ok: true }
@@ -218,23 +234,23 @@ export function QuoteEditor({
               window.open(res.data?.url ?? `/api/documents/quotes/${id}`, "_blank")
               router.refresh()
             })
-          }
+          }}
           className={btn.outline}
         >
           <FileTextIcon className="size-4" /> PDF
         </button>
         {status === "quoted" ? (
           <>
-            <button type="button" disabled={pending} onClick={() => act(() => setQuoteStatusAction(id, "accepted"), "Marked accepted")} className={btn.ghost}>
+            <button type="button" disabled={pending} onClick={() => act({ title: "Mark as accepted?", description: "Record that the customer accepted this quotation.", details: [totalLine()], tone: "success", confirmLabel: "Mark accepted" }, () => setQuoteStatusAction(id, "accepted"), "Marked accepted")} className={btn.ghost}>
               <CheckIcon className="size-4" /> Accepted
             </button>
-            <button type="button" disabled={pending} onClick={() => act(() => setQuoteStatusAction(id, "rejected"), "Marked declined")} className={btn.ghost}>
+            <button type="button" disabled={pending} onClick={() => act({ title: "Mark as declined?", description: "The quote is closed as declined and can no longer be edited.", tone: "danger", confirmLabel: "Mark declined" }, () => setQuoteStatusAction(id, "rejected"), "Marked declined")} className={btn.ghost}>
               Declined
             </button>
           </>
         ) : null}
         {editable && status !== "quoted" ? (
-          <button type="button" disabled={pending} onClick={() => act(() => setQuoteStatusAction(id, "closed"), "Closed")} className={btn.ghost}>
+          <button type="button" disabled={pending} onClick={() => act({ title: "Close without a quote?", description: "The enquiry is closed and leaves the open inbox. The customer isn't emailed.", tone: "danger", confirmLabel: "Close enquiry" }, () => setQuoteStatusAction(id, "closed"), "Closed")} className={btn.ghost}>
             Close without quote
           </button>
         ) : null}

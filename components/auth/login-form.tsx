@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react"
 import { ArrowRightIcon, LoaderIcon, MailCheckIcon } from "lucide-react"
 import { Field, Honeypot, TextInput } from "@/components/forms/controls"
+import { useConfirm } from "@/components/shared/confirm"
 import { requestSignIn, verifySignInCode } from "@/server/actions/auth"
 
 export function LoginForm({ next, linkError }: { next: string; linkError: boolean }) {
@@ -15,6 +16,7 @@ export function LoginForm({ next, linkError }: { next: string; linkError: boolea
   const startedAt = useRef(0)
   const honeypot = useRef<HTMLInputElement>(null)
   const codeRef = useRef<HTMLInputElement>(null)
+  const confirm = useConfirm()
 
   useEffect(() => {
     startedAt.current = Date.now()
@@ -103,9 +105,20 @@ export function LoginForm({ next, linkError }: { next: string; linkError: boolea
 
   return (
     <form
-      onSubmit={(e) => {
+      onSubmit={async (e) => {
         e.preventDefault()
-        send()
+        if (!/^S+@S+.S+$/.test(email.trim())) {
+          setError("Enter a valid email address")
+          return
+        }
+        const ok = await confirm({
+          title: "Send sign-in link?",
+          description: "We'll email a one-time link and a 6-digit code. Nothing to remember — no password.",
+          details: [["Email", email.trim()], ...(fullName.trim() ? ([["Name", fullName.trim()]] as [string, string][]) : [])],
+          confirmLabel: "Send link",
+          icon: "login",
+        })
+        if (ok) send()
       }}
       className="relative grid gap-5"
       noValidate

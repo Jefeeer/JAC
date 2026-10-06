@@ -8,12 +8,14 @@ import type { z } from "zod"
 import { LoaderIcon } from "lucide-react"
 import { Field, NativeSelect, TextArea, TextInput } from "@/components/forms/controls"
 import { btn } from "@/components/admin/ui"
+import { useConfirm } from "@/components/shared/confirm"
 import { partSchema, type PartForm as PartFormValues } from "@/lib/validation/admin"
 import { savePartAction } from "@/server/actions/admin"
 
 export function PartEditor({ initial, categories }: { initial?: PartFormValues; categories: { slug: string; name: string }[] }) {
   const router = useRouter()
   const [pending, start] = useTransition()
+  const confirm = useConfirm()
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const { register, handleSubmit, formState, setError, getValues } = useForm<PartFormValues, unknown, z.output<typeof partSchema>>({
     resolver: zodResolver(partSchema),
@@ -29,7 +31,19 @@ export function PartEditor({ initial, categories }: { initial?: PartFormValues; 
   return (
     <form
       noValidate
-      onSubmit={handleSubmit(() =>
+      onSubmit={handleSubmit(async () => {
+        const v = getValues()
+        const ok = await confirm({
+          title: initial?.id ? "Save changes to this part?" : "Create this part?",
+          description: v.isPublished ? "Shown on the website parts catalog right away." : "Saved as hidden from the website.",
+          details: [
+            ["Part", `${String(v.partNumber ?? "")} · ${String(v.name ?? "")}`],
+            ["Price", v.priceOnRequest ? "On request" : v.price ? `₱${String(v.price)}` : "—"],
+            ["On hand", String(v.stockQty ?? 0)],
+          ],
+          confirmLabel: initial?.id ? "Save changes" : "Create part",
+        })
+        if (!ok) return
         start(async () => {
           setMsg(null)
           // send raw inputs — the server action re-validates with the same schema
@@ -42,8 +56,8 @@ export function PartEditor({ initial, categories }: { initial?: PartFormValues; 
           setMsg({ ok: true, text: "Saved" })
           if (!initial?.id) router.push(`/admin/parts/${res.data?.id}`)
           router.refresh()
-        }),
-      )}
+        })
+      })}
       className="grid gap-5"
     >
       {initial?.id ? <input type="hidden" {...register("id")} /> : null}

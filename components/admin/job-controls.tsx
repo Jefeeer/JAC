@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowRightIcon, CheckIcon, LoaderIcon, Trash2Icon } from "lucide-react"
 import { btn } from "@/components/admin/ui"
+import { useConfirm, type ConfirmOptions } from "@/components/shared/confirm"
 import { formatPeso } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { addJobItemAction, createInvoiceAction, removeJobItemAction, setJobStatusAction, updateJobAction } from "@/server/actions/admin"
@@ -22,7 +23,10 @@ function useAction() {
   const router = useRouter()
   const [pending, start] = useTransition()
   const [error, setError] = useState<string | null>(null)
-  const run = (fn: () => Promise<{ ok: boolean; error?: string }>, after?: () => void) =>
+  const confirm = useConfirm()
+  /** Every job action asks first; pass the confirmation copy as the first argument. */
+  const run = async (ask: ConfirmOptions, fn: () => Promise<{ ok: boolean; error?: string }>, after?: () => void) => {
+    if (!(await confirm(ask))) return
     start(async () => {
       setError(null)
       const res = await fn()
@@ -32,6 +36,7 @@ function useAction() {
         router.refresh()
       }
     })
+  }
   return { pending, error, run }
 }
 
@@ -47,7 +52,16 @@ export function AdvanceJobButton({ id, status, canRelease }: { id: string; statu
         disabled={pending}
         onClick={(e) => {
           e.preventDefault()
-          run(() => setJobStatusAction(id, next))
+          run(
+            {
+              title: `Move to ${label(next)}?`,
+              description: next === "released" ? "The truck is handed back and the job closes. The customer is notified." : "The customer sees the new stage on their live job page.",
+              details: [["From", label(status)], ["To", label(next)]],
+              confirmLabel: `Move to ${label(next)}`,
+              tone: next === "released" ? "success" : "default",
+            },
+            () => setJobStatusAction(id, next),
+          )
         }}
         className="inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-md border border-border text-xs font-semibold hover:border-brand hover:bg-brand hover:text-white disabled:opacity-50"
       >
@@ -107,7 +121,26 @@ export function JobStatusControl({ id, status, allowed }: { id: string; status: 
             className="h-10 rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-brand"
           />
           <div className="flex gap-2">
-            <button type="button" disabled={pending} onClick={() => run(() => setJobStatusAction(id, target, note), () => setNote(""))} className={target === "cancelled" ? btn.danger : btn.primary}>
+            <button type="button" disabled={pending} onClick={() =>
+                run(
+                  {
+                    title: target === "cancelled" ? "Cancel this job order?" : `Move to ${label(target)}?`,
+                    description:
+                      target === "cancelled"
+                        ? "The job closes without release. The customer is notified."
+                        : "The customer is notified and sees this on their live job page.",
+                    details: [
+                      ["From", label(status)],
+                      ["To", label(target)],
+                      ...(note.trim() ? ([["Note", note.trim()]] as [string, string][]) : []),
+                    ],
+                    tone: target === "cancelled" ? "danger" : target === "released" ? "success" : "default",
+                    confirmLabel: target === "cancelled" ? "Cancel job" : "Update status",
+                  },
+                  () => setJobStatusAction(id, target, note),
+                  () => setNote(""),
+                )
+              } className={target === "cancelled" ? btn.danger : btn.primary}>
               {pending ? <LoaderIcon className="size-4 animate-spin" /> : null} Update status
             </button>
             <button type="button" onClick={() => setTarget(null)} className={btn.ghost}>
@@ -141,6 +174,12 @@ export function JobNotesForm({
       onSubmit={(e) => {
         e.preventDefault()
         run(
+          {
+            title: "Save job details?",
+            description: "The note to customer appears on their job page and in emails.",
+            details: canAssign ? [["Mechanic", mechanics.find((m) => m.id === v.mechanicId)?.name ?? "Unassigned"]] : undefined,
+            confirmLabel: "Save",
+          },
           () =>
             updateJobAction({
               id,
@@ -231,7 +270,12 @@ export function JobItemsEditor({
                 <td className="py-2.5 pl-3 text-right font-mono whitespace-nowrap">{formatPeso(i.lineTotal)}</td>
                 {canRemove ? (
                   <td className="w-10 pl-2 text-right">
-                    <button type="button" onClick={() => run(() => removeJobItemAction(jobId, i.id))} className="text-muted-foreground hover:text-destructive" aria-label={`Remove ${i.description}`}>
+                    <button type="button" onClick={() =>
+                        run(
+                          { title: "Remove this line?", details: [["Item", i.description]], tone: "danger", icon: "delete", confirmLabel: "Remove line" },
+                          () => removeJobItemAction(jobId, i.id),
+                        )
+                      } className="text-muted-foreground hover:text-destructive" aria-label={`Remove ${i.description}`}>
                       <Trash2Icon className="size-4" />
                     </button>
                   </td>
@@ -261,7 +305,18 @@ export function JobItemsEditor({
         <form
           onSubmit={(e) => {
             e.preventDefault()
+            const qty = Number(draft.quantity)
+            const price = Number(draft.unitPrice.replace(/[,₱s]/g, "") || 0)
             run(
+              {
+                title: "Add this line?",
+                details: [
+                  ["Item", draft.description || "—"],
+                  ["Qty × price", `${qty} × ${formatPeso(price)}`],
+                  ["Line total", formatPeso(qty * price)],
+                ],
+                confirmLabel: "Add line",
+              },
               () =>
                 addJobItemAction({
                   jobId,
@@ -317,7 +372,17 @@ export function CreateInvoiceButton({ jobId }: { jobId: string }) {
   const { pending, error, run } = useAction()
   return (
     <div>
-      <button type="button" disabled={pending} onClick={() => run(() => createInvoiceAction(jobId))} className={btn.primary}>
+      <button type="button" disabled={pending} onClick={() =>
+          run(
+            {
+              title: "Create the invoice?",
+              description: "Labour and parts on this job are copied to a new invoice (12% VAT added) and a PDF is generated.",
+              confirmLabel: "Create invoice",
+              icon: "send",
+            },
+            () => createInvoiceAction(jobId),
+          )
+        } className={btn.primary}>
         {pending ? <LoaderIcon className="size-4 animate-spin" /> : null} Create invoice
       </button>
       {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}

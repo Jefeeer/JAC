@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { CheckIcon, LoaderIcon, MinusIcon, PlusIcon } from "lucide-react"
+import { useConfirm } from "@/components/shared/confirm"
 import { cn } from "@/lib/utils"
 import { setPartStockAction } from "@/server/actions/admin"
 
@@ -12,15 +13,34 @@ export function StockEditor({ id, qty, reorderLevel }: { id: string; qty: number
   const [value, setValue] = useState(String(qty))
   const [pending, start] = useTransition()
   const [error, setError] = useState<string | null>(null)
+  const confirm = useConfirm()
   const n = Number(value)
   const dirty = n !== qty
-  const save = (next = n) =>
+  const save = async (next = n) => {
+    const ok = await confirm({
+      title: "Update stock count?",
+      description:
+        next <= 0
+          ? "The part will show as out of stock on the website."
+          : next <= reorderLevel
+            ? "This is at or below the reorder level, so it will show as low stock."
+            : "The website stock badge updates right away.",
+      details: [
+        ["Was", String(qty)],
+        ["Now", String(next)],
+        ["Change", `${next - qty >= 0 ? "+" : ""}${next - qty}`],
+      ],
+      tone: next <= 0 ? "danger" : "default",
+      confirmLabel: "Update stock",
+    })
+    if (!ok) return
     start(async () => {
       setError(null)
       const res = await setPartStockAction(id, next)
       if (!res.ok) setError(res.error)
       else router.refresh()
     })
+  }
   const tone = qty <= 0 ? "text-destructive" : qty <= reorderLevel ? "text-signal-foreground dark:text-signal" : ""
 
   return (

@@ -7,7 +7,8 @@ import { ChipRadio, FilterGroup, RowRadio, ToggleRow } from "@/components/catalo
 import { NativeSelect } from "@/components/forms/controls"
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { formatPesoCompact } from "@/lib/format"
-import { PAYLOAD_BANDS, type TruckFilters as Filters } from "@/lib/validation/catalog"
+import { PAYLOAD_BANDS } from "@/lib/catalog-options"
+import type { TruckFilters as Filters } from "@/lib/validation/catalog"
 import { BODY_TYPE_LABELS } from "@/types/domain"
 import type { TruckFacets } from "@/server/queries/catalog"
 

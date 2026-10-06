@@ -6,6 +6,7 @@ import { PublishToggle } from "@/components/admin/publish-toggle"
 import { TruckEditor } from "@/components/admin/truck-form"
 import { TruckImages } from "@/components/admin/truck-images"
 import { Panel, btn } from "@/components/admin/ui"
+import { ConfirmSubmitButton } from "@/components/shared/confirm"
 import { PageHeader } from "@/components/portal/page-header"
 import credits from "@/lib/photo-credits.json"
 import { toKeyValues } from "@/lib/validation/admin"
@@ -30,7 +31,7 @@ export default async function EditTruckPage(props: PageProps<"/admin/trucks/[id]
         title={t.title}
         actions={
           <>
-            <PublishToggle kind="truck" id={t.id} published={t.isPublished} />
+            <PublishToggle kind="truck" id={t.id} published={t.isPublished} name={t.title} />
             {t.isPublished ? (
               <Link href={`/trucks/${t.slug}`} target="_blank" className={btn.outline}>
                 <ExternalLinkIcon className="size-4" /> View listing
@@ -90,9 +91,22 @@ export default async function EditTruckPage(props: PageProps<"/admin/trucks/[id]
 
       {can(role, "trucks.delete") ? (
         <form action={deleteTruckAction.bind(null, t.id)} className="flex justify-end">
-          <button type="submit" className={btn.danger}>
+          <ConfirmSubmitButton
+            confirm={{
+              title: "Delete this truck permanently?",
+              description: "The listing and its photos are removed for good. Quotes that mention it keep their text. Mark it Sold or unpublish it instead if you may need it again.",
+              details: [
+                ["Truck", t.title],
+                ["Stock no.", t.stockNumber ?? "—"],
+              ],
+              tone: "danger",
+              icon: "delete",
+              confirmLabel: "Delete permanently",
+            }}
+            className={btn.danger}
+          >
             <Trash2Icon className="size-4" /> Delete truck permanently
-          </button>
+          </ConfirmSubmitButton>
         </form>
       ) : null}
     </div>

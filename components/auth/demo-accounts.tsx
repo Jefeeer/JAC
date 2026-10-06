@@ -2,6 +2,21 @@ import { ArrowUpRightIcon, ClipboardListIcon, CogIcon, ShieldCheckIcon, TruckIco
 import { DEMO_ACCOUNTS, type DemoAccount } from "@/lib/demo/accounts"
 import { cn } from "@/lib/utils"
 import { demoSignIn } from "@/server/actions/demo"
+import { ConfirmSubmitButton, type ConfirmOptions } from "@/components/shared/confirm"
+
+const ROLE_NAMES: Record<string, string> = { admin: "Admin", service_advisor: "Service advisor", mechanic: "Mechanic", sales: "Sales", parts: "Parts", customer: "Customer" }
+
+const signInConfirm = (a: DemoAccount): ConfirmOptions => ({
+  title: `Sign in as ${a.fullName.split(" ")[0]}?`,
+  description: a.role === "customer" ? "You'll open the customer portal with this demo account's fleet, bookings and quotes." : "You'll open the staff panel with this role's permissions.",
+  details: [
+    ["Account", a.fullName],
+    ["Role", ROLE_NAMES[a.role] ?? a.role],
+    ["Opens", a.role === "customer" ? "/account" : "/admin"],
+  ],
+  confirmLabel: "Sign in",
+  icon: "login",
+})
 
 const roleIcon: Record<string, React.ElementType> = {
   admin: ShieldCheckIcon,
@@ -22,8 +37,8 @@ const initials = (name: string) =>
 function CustomerCard({ a, next }: { a: DemoAccount; next: string }) {
   return (
     <form action={demoSignIn.bind(null, a.id, next)} className="min-w-0">
-      <button
-        type="submit"
+      <ConfirmSubmitButton
+        confirm={signInConfirm(a)}
         className="group relative flex h-full w-full flex-col overflow-hidden rounded-md border border-border bg-card p-5 text-left transition-all hover:-translate-y-0.5 hover:border-brand hover:shadow-lg hover:shadow-brand/10"
       >
         <span className="absolute inset-x-0 top-0 h-1 bg-brand opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
@@ -36,7 +51,7 @@ function CustomerCard({ a, next }: { a: DemoAccount; next: string }) {
           <ArrowUpRightIcon className="ml-auto size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-brand-ink" />
         </span>
         <span className="mt-3 text-sm leading-snug text-muted-foreground">{a.blurb}</span>
-      </button>
+      </ConfirmSubmitButton>
     </form>
   )
 }
@@ -45,9 +60,8 @@ function StaffCard({ a, next }: { a: DemoAccount; next: string }) {
   const Icon = roleIcon[a.role] ?? UserRoundIcon
   return (
     <form action={demoSignIn.bind(null, a.id, next)} className="min-w-0">
-      <button
-        type="submit"
-        title={a.blurb}
+      <ConfirmSubmitButton
+        confirm={signInConfirm(a)}
         className="group flex w-full items-center gap-3 rounded-md border border-border bg-card px-3.5 py-3 text-left transition-colors hover:border-foreground/40 hover:bg-muted/40"
       >
         <span className="grid size-9 shrink-0 place-items-center rounded-md bg-asphalt text-concrete">
@@ -58,7 +72,7 @@ function StaffCard({ a, next }: { a: DemoAccount; next: string }) {
           <span className="block truncate text-xs text-muted-foreground">{a.fullName}</span>
         </span>
         <ArrowUpRightIcon className="size-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
-      </button>
+      </ConfirmSubmitButton>
     </form>
   )
 }

@@ -46,7 +46,7 @@ export function SidebarNav({ groups, onNavigate }: { groups: NavGroup[]; onNavig
     <nav aria-label="Sections" className="grid gap-6">
       {groups.map((g) => (
         <div key={g.label}>
-          <p className="px-3 font-mono text-[10px] tracking-[0.22em] text-concrete/40 uppercase">{g.label}</p>
+          <p className="px-3 font-mono text-[10px] tracking-[0.22em] text-concrete/65 uppercase">{g.label}</p>
           <ul className="mt-2 grid gap-0.5">
             {g.items.map((item) => {
               const Icon = NAV_ICONS[item.icon]
@@ -63,7 +63,7 @@ export function SidebarNav({ groups, onNavigate }: { groups: NavGroup[]; onNavig
                     )}
                   >
                     {active ? <span className="absolute inset-y-2 -left-3 w-[3px] rounded-r-full bg-brand" aria-hidden /> : null}
-                    <Icon className={cn("size-[18px] shrink-0", active ? "text-brand" : "text-concrete/45 group-hover:text-concrete/80")} />
+                    <Icon className={cn("size-[18px] shrink-0", active ? "text-brand" : "text-concrete/65 group-hover:text-concrete/80")} />
                     <span className="flex-1 truncate">{item.label}</span>
                     {item.count ? (
                       <span

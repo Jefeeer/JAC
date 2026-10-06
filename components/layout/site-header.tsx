@@ -45,8 +45,9 @@ export function SiteHeader() {
       {/* Main bar */}
       <div className="border-b border-border bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
         <div className="mx-auto flex h-16 max-w-[1440px] items-center gap-6 px-4 sm:px-6">
-          <Link href="/" className="shrink-0 rounded-sm" aria-label="JAC Motors — home">
+          <Link href="/" className="shrink-0 rounded-sm">
             <Logo showRegion />
+            <span className="sr-only"> — home</span>
           </Link>
 
           <DesktopNav />

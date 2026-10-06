@@ -88,7 +88,7 @@ export default async function AdminPartsPage(props: PageProps<"/admin/parts">) {
                 <Td className="text-right font-mono text-xs">{p.reorderLevel}</Td>
                 <Td className="text-right font-mono text-xs">{priceLabel(p)}</Td>
                 <Td>
-                  <PublishToggle kind="part" id={p.id} published={p.isPublished} />
+                  <PublishToggle kind="part" id={p.id} published={p.isPublished} name={`${p.partNumber} · ${p.name}`} />
                 </Td>
               </tr>
             ))}

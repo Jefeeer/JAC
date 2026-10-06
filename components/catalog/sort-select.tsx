@@ -17,7 +17,7 @@ export function SortSelect({
       <label htmlFor="catalog-sort" className="hidden font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase sm:block">
         Sort
       </label>
-      <NativeSelect id="catalog-sort" name="sort" defaultValue={value} className="h-11 min-w-48 text-sm">
+      <NativeSelect id="catalog-sort" name="sort" aria-label="Sort by" defaultValue={value} className="h-11 min-w-48 text-sm">
         {Object.entries(options).map(([k, label]) => (
           <option key={k} value={k}>
             {label}

@@ -56,7 +56,7 @@ export function SiteFooter() {
           <div className="grid grid-cols-2 gap-10 sm:grid-cols-4">
             {footerNav.map((group) => (
               <nav key={group.title} aria-label={group.title}>
-                <h2 className="font-mono text-[11px] font-normal tracking-[0.2em] text-concrete/45 uppercase">{group.title}</h2>
+                <h2 className="font-mono text-[11px] font-normal tracking-[0.2em] text-concrete/65 uppercase">{group.title}</h2>
                 <ul className="mt-4 space-y-2.5 text-sm">
                   {group.items.map((item) => (
                     <li key={item.href}>
@@ -69,12 +69,12 @@ export function SiteFooter() {
               </nav>
             ))}
             <div>
-              <h2 className="font-mono text-[11px] font-normal tracking-[0.2em] text-concrete/45 uppercase">Branches</h2>
+              <h2 className="font-mono text-[11px] font-normal tracking-[0.2em] text-concrete/65 uppercase">Branches</h2>
               <ul className="mt-4 space-y-2.5 text-sm">
                 {branches.map((b) => (
                   <li key={b.slug}>
                     <Link href={`/contact#${b.slug}`} className="group flex items-baseline gap-2 text-concrete/80 hover:text-white">
-                      <span className="font-mono text-[10px] text-concrete/40 group-hover:text-brand-ink">{b.code}</span>
+                      <span className="font-mono text-[10px] text-concrete/65 group-hover:text-brand-ink">{b.code}</span>
                       {b.name}
                     </Link>
                   </li>
@@ -87,7 +87,7 @@ export function SiteFooter() {
         {/* Giant wordmark */}
         <div className="relative mt-16 select-none" aria-hidden>
           <JacMark title={null} className="h-auto w-full text-white/[0.04]" />
-          <span className="absolute right-0 bottom-[6%] font-mono text-[10px] tracking-[0.3em] text-concrete/40 uppercase sm:text-xs">
+          <span className="absolute right-0 bottom-[6%] font-mono text-[10px] tracking-[0.3em] text-concrete/65 uppercase sm:text-xs">
             Motors · Philippines
           </span>
         </div>

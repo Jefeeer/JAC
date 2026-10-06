@@ -74,7 +74,7 @@ export function LineupScale({ items }: { items: LineupItem[] }) {
             ))}
           </ol>
         </div>
-        <p className="mt-4 font-mono text-[10px] tracking-[0.18em] text-concrete/40 uppercase">
+        <p className="mt-4 font-mono text-[10px] tracking-[0.18em] text-concrete/65 uppercase">
           Rated payload, top variant per model · Scale is square-root for legibility
         </p>
       </div>

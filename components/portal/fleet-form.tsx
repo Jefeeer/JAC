@@ -1,5 +1,6 @@
 "use client"
 
+import { useConfirm } from "@/components/shared/confirm"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
@@ -36,8 +37,19 @@ export function FleetForm({ initial, models }: { initial?: FleetUnitInput; model
     },
   })
   const e = formState.errors as Record<string, { message?: string } | undefined>
+  const confirm = useConfirm()
 
-  const onSubmit = handleSubmit((values) =>
+  const onSubmit = handleSubmit(async (values) => {
+    const ok = await confirm({
+      title: values.id ? "Save changes to this truck?" : "Add this truck to your fleet?",
+      description: values.id ? "Service reminders are recalculated from the updated details." : "We'll track its maintenance and remind you before each PMS.",
+      details: [
+        ["Truck", `${values.make ?? "JAC"} ${values.model ?? ""}`.trim()],
+        ...(values.plateNumber ? ([["Plate", String(values.plateNumber).toUpperCase()]] as [string, string][]) : []),
+      ],
+      confirmLabel: values.id ? "Save changes" : "Add truck",
+    })
+    if (!ok) return
     start(async () => {
       setError(null)
       const res = await saveFleetUnit(values)
@@ -48,8 +60,8 @@ export function FleetForm({ initial, models }: { initial?: FleetUnitInput; model
       }
       setError(res.error)
       for (const [k, m] of Object.entries(res.fieldErrors ?? {})) if (m?.[0]) setFieldError(k as keyof FleetUnitInput, { message: m[0] })
-    }),
-  )
+    })
+  })
 
   return (
     <form onSubmit={onSubmit} noValidate className="grid gap-8">

@@ -72,10 +72,9 @@ export function Hero() {
             Built to keep you{" "}
             <span className="relative inline-block text-brand">
               moving.
-              <span
-                aria-hidden
-                className="absolute inset-x-0 -bottom-[0.08em] h-[0.07em] animate-lane bg-[repeating-linear-gradient(90deg,var(--signal)_0_28px,transparent_28px_48px)]"
-              />
+              <span aria-hidden className="absolute inset-x-0 -bottom-[0.08em] h-[0.07em] overflow-hidden">
+                <span className="absolute inset-y-0 left-0 w-[calc(100%+48px)] animate-lane bg-[repeating-linear-gradient(90deg,var(--signal)_0_28px,transparent_28px_48px)] will-change-transform" />
+              </span>
             </span>
           </h1>
 

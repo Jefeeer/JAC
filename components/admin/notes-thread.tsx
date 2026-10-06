@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { LoaderIcon, LockIcon } from "lucide-react"
+import { useConfirm } from "@/components/shared/confirm"
 import { formatRelative } from "@/lib/format"
 import { addNoteAction } from "@/server/actions/admin"
 import type { StaffNote } from "@/server/admin/types"
@@ -13,11 +14,13 @@ export function NotesThread({ entityType, entityId, notes }: { entityType: "quot
   const [body, setBody] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [pending, start] = useTransition()
+  const confirm = useConfirm()
   return (
     <div className="grid gap-4">
       <form
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault()
+          if (!(await confirm({ title: "Add internal note?", description: "Visible to staff only — never shown to the customer. Notes can't be edited later.", details: [["Note", body.trim().slice(0, 140) + (body.trim().length > 140 ? "…" : "")]], confirmLabel: "Add note" }))) return
           start(async () => {
             const res = await addNoteAction({ entityType, entityId, body })
             if (res.ok) {

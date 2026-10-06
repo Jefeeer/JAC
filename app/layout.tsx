@@ -24,6 +24,8 @@ const jetbrains = JetBrains_Mono({
   variable: "--font-jetbrains",
   subsets: ["latin"],
   display: "swap",
+  // small labels only; keep it off the critical path
+  preload: false,
 })
 
 export const metadata: Metadata = {

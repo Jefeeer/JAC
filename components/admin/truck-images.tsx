@@ -5,6 +5,7 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { ImagePlusIcon, LoaderIcon, StarIcon, Trash2Icon, UploadIcon } from "lucide-react"
 import { btn } from "@/components/admin/ui"
+import { useConfirm, type ConfirmOptions } from "@/components/shared/confirm"
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser"
 import { cn } from "@/lib/utils"
 import { addTruckImageAction, removeTruckImageAction, setPrimaryTruckImageAction } from "@/server/actions/admin"
@@ -21,21 +22,34 @@ export function TruckImages({ truckId, title, images, library, uploads }: { truc
   const [pending, start] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const [showLib, setShowLib] = useState(false)
+  const confirm = useConfirm()
 
-  const run = (fn: () => Promise<{ ok: boolean; error?: string }>) =>
+  const run = async (ask: ConfirmOptions, fn: () => Promise<{ ok: boolean; error?: string }>) => {
+    if (!(await confirm(ask))) return
     start(async () => {
       setError(null)
       const res = await fn()
       if (!res.ok) setError(res.error ?? "Something went wrong")
       router.refresh()
     })
+  }
 
-  const upload = (files: FileList | null) => {
-    if (!files?.length) return
+  const upload = async (input: HTMLInputElement) => {
+    const files = input.files ? [...input.files] : []
+    input.value = ""
+    if (!files.length) return
+    const ok = await confirm({
+      title: `Upload ${files.length} photo${files.length > 1 ? "s" : ""}?`,
+      description: "Photos are added to this listing (up to 8 at a time, 10 MB each).",
+      details: files.slice(0, 4).map((f, i) => [`#${i + 1}`, f.name] as [string, string]),
+      confirmLabel: "Upload",
+      icon: "send",
+    })
+    if (!ok) return
     start(async () => {
       setError(null)
       const supabase = getSupabaseBrowserClient()
-      for (const file of [...files].slice(0, 8)) {
+      for (const file of files.slice(0, 8)) {
         if (!file.type.startsWith("image/") || file.size > 10 * 1024 * 1024) {
           setError(`${file.name}: images up to 10 MB only`)
           continue
@@ -71,11 +85,22 @@ export function TruckImages({ truckId, title, images, library, uploads }: { truc
             {img.isPrimary ? <span className="absolute top-2 left-2 rounded-[2px] bg-brand px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-wider text-white uppercase">Cover</span> : null}
             <div className="absolute inset-x-0 bottom-0 flex justify-end gap-1 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
               {!img.isPrimary ? (
-                <button type="button" onClick={() => run(() => setPrimaryTruckImageAction(truckId, img.url))} className="grid size-8 place-items-center rounded bg-white/90 text-black" aria-label="Make cover photo">
+                <button type="button" onClick={() => run({ title: "Make this the cover photo?", description: "The cover photo leads the listing, cards and link previews.", confirmLabel: "Set as cover", icon: "check" }, () => setPrimaryTruckImageAction(truckId, img.url))} className="grid size-8 place-items-center rounded bg-white/90 text-black" aria-label="Make cover photo">
                   <StarIcon className="size-4" />
                 </button>
               ) : null}
-              <button type="button" onClick={() => run(() => removeTruckImageAction(truckId, img.url))} className="grid size-8 place-items-center rounded bg-white/90 text-destructive" aria-label="Remove photo">
+              <button type="button" onClick={() =>
+                  run(
+                    {
+                      title: "Remove this photo?",
+                      description: images.length <= 1 ? "This is the only photo. A published listing needs at least one." : "It is removed from the listing.",
+                      tone: "danger",
+                      icon: "delete",
+                      confirmLabel: "Remove photo",
+                    },
+                    () => removeTruckImageAction(truckId, img.url),
+                  )
+                } className="grid size-8 place-items-center rounded bg-white/90 text-destructive" aria-label="Remove photo">
                 <Trash2Icon className="size-4" />
               </button>
             </div>
@@ -88,7 +113,7 @@ export function TruckImages({ truckId, title, images, library, uploads }: { truc
         {uploads ? (
           <label className={cn(btn.dark, "cursor-pointer")}>
             {pending ? <LoaderIcon className="size-4 animate-spin" /> : <UploadIcon className="size-4" />} Upload photos
-            <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple className="sr-only" onChange={(e) => upload(e.target.files)} />
+            <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple className="sr-only" onChange={(e) => upload(e.currentTarget)} />
           </label>
         ) : null}
         <button type="button" onClick={() => setShowLib((v) => !v)} className={btn.outline}>
@@ -106,7 +131,7 @@ export function TruckImages({ truckId, title, images, library, uploads }: { truc
                 <button
                   type="button"
                   disabled={pending}
-                  onClick={() => run(() => addTruckImageAction({ truckId, url: l.src, alt: title }))}
+                  onClick={() => run({ title: "Add this photo?", details: [["Photo", l.title]], confirmLabel: "Add photo" }, () => addTruckImageAction({ truckId, url: l.src, alt: title }))}
                   className="relative block aspect-[4/3] w-full overflow-hidden rounded border border-border hover:ring-2 hover:ring-brand"
                   title={l.title}
                 >

@@ -30,7 +30,7 @@ export function BranchBoard() {
         />
 
         <div className="mt-14 overflow-hidden rounded-sm border border-white/10 bg-black/40">
-          <div className="hidden grid-cols-[5rem_1.3fr_1fr_1fr_11rem_3rem] gap-4 border-b border-white/10 px-6 py-3 font-mono text-[10px] tracking-[0.22em] text-concrete/45 uppercase md:grid">
+          <div className="hidden grid-cols-[5rem_1.3fr_1fr_1fr_11rem_3rem] gap-4 border-b border-white/10 px-6 py-3 font-mono text-[10px] tracking-[0.22em] text-concrete/65 uppercase md:grid">
             <span>Code</span>
             <span>Branch</span>
             <span>City</span>
@@ -102,7 +102,7 @@ export function BranchBoard() {
             })}
           </ul>
         </div>
-        <p className="mt-4 font-mono text-[10px] tracking-[0.18em] text-concrete/40 uppercase">
+        <p className="mt-4 font-mono text-[10px] tracking-[0.18em] text-concrete/65 uppercase">
           Status shown in Philippine time · Breakdown line answers 24/7
         </p>
       </div>
