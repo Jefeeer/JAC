@@ -23,8 +23,8 @@
 | 4 | Book Service form, branded email + SMS notifications, status webhooks | ✅ |
 | 5 | Auth (magic link + code) + customer portal, demo mode | ✅ |
 | 6 | Admin panel: role-based dashboard, job board, bookings, quotes + PDF, trucks, parts + import, customers | ✅ |
-| 7 | Python service (imports, PDFs, reports, reminders) | ⏳ next |
-| 8 | SEO, performance pass, deployment docs | ⏳ |
+| 7 | Python service: CSV/Excel import, ReportLab PDFs, sales + inventory reports, daily PMS reminders — see `python-service/README.md` | ✅ |
+| 8 | SEO, performance pass, deployment docs | ⏳ next |
 
 ---
 
