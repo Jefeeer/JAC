@@ -21,8 +21,8 @@
 | 2 | Supabase schema, RLS, storage, seed data, DB test suite | ✅ |
 | 3 | Trucks + parts catalog (public), quote forms, financing calculator | ✅ |
 | 4 | Book Service form, branded email + SMS notifications, status webhooks | ✅ |
-| 5 | Auth + customer portal | ⏳ next |
-| 6 | Admin panel | ⏳ |
+| 5 | Auth (magic link + code) + customer portal, demo mode | ✅ |
+| 6 | Admin panel | ⏳ next |
 | 7 | Python service (imports, PDFs, reports, reminders) | ⏳ |
 | 8 | SEO, performance pass, deployment docs | ⏳ |
 
@@ -40,6 +40,9 @@
 │   │   ├── parts/(list)/       # /parts — part no./name search, fits-my-truck, categories, stock
 │   │   ├── parts/[slug]/       # part detail (SSG + ISR 1 h): fitment, specs, quote form + photo upload
 │   │   ├── book-service/       # service / breakdown booking form
+│   ├── (auth)/login/           # magic link + 6-digit code sign-in, demo personas
+│   ├── (portal)/account/       # customer portal: dashboard, fleet, jobs (live), bookings, quotes, notifications, profile
+│   ├── auth/confirm/           # magic-link landing (token_hash or PKCE code)
 │   ├── api/webhooks/supabase/  # DB webhook → booking & job status emails/SMS
 │   ├── api/dev/emails/         # dev-only email previews
 │   │   ├── credits/            # photo attribution
@@ -94,7 +97,19 @@ cp .env.example .env.local   # fill in Supabase keys when ready
 npm run dev                  # http://localhost:3000
 ```
 
-The site runs **without Supabase** — catalog queries fall back to the sample data in `lib/data/seed-data.ts` and log a warning. Wire Supabase before working on forms, auth, portal or admin.
+The site runs **without Supabase** — catalog queries fall back to the sample data in `lib/data/seed-data.ts` and log a warning.
+
+### Demo mode (no Supabase needed)
+
+Set `NEXT_PUBLIC_DEMO_MODE=1` in `.env.local` and restart. The login page then offers one-click **demo accounts**:
+
+| Persona | Area | What to try |
+| --- | --- | --- |
+| Ana Reyes — fleet customer | `/account` | A truck in the workshop advances one stage every 40 s (or use **Advance live job**); a priced quote; overdue units; cancel a booking; add a truck |
+| Ben Santos — single-truck owner | `/account` | Pending booking, one used unit |
+| Carla (admin), Jun (service advisor), Rico (mechanic), Mika (sales), Leo (parts) | `/admin` | Staff views per role |
+
+Demo data lives in server memory (`server/demo/*`), is shared by all demo sessions and resets on restart or via **Reset data**. Quote/booking forms on the public site also land in the demo data. **Turn demo mode off on the production site** once Supabase is live.
 
 ### Scripts
 
@@ -135,8 +150,9 @@ Paste and run, in order:
 5. `supabase/seed.sql` (optional sample data)
 
 ### 3. Auth settings
-- **Authentication → Providers → Email**: enable, magic link on.
-- **Authentication → URL configuration**: Site URL = your domain; add `http://localhost:3000/**` to redirect URLs.
+- **Authentication → Providers → Email**: enable (magic link / OTP).
+- **Authentication → URL configuration**: Site URL = your domain; add `https://YOUR-DOMAIN/auth/confirm` and `http://localhost:3000/**` to redirect URLs.
+- **Authentication → Emails → Templates**: paste `supabase/templates/magic-link.html` into *Magic Link* and *Confirm signup* (branded; uses `token_hash` so links work on any device, and shows the 6-digit code fallback).
 
 ### 4. Make yourself an admin
 Sign up on the site (step 5) or create a user in **Authentication → Users**, then:

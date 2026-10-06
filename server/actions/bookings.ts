@@ -8,6 +8,9 @@ import { isSupabaseConfigured } from "@/lib/supabase/env"
 import { bookingSchema, type BookingInput } from "@/lib/validation/booking"
 import type { ActionResult } from "@/lib/validation/quote"
 import { resolveCustomerId } from "@/server/customers"
+import { DEMO_MODE } from "@/lib/demo/accounts"
+import { getSession } from "@/server/auth"
+import { demoSubmissions } from "@/server/demo/mutations"
 import { notifyBookingCreated } from "@/server/notifications"
 import { getClientIp, looksLikeBot, rateLimit } from "@/server/security/guards"
 
@@ -28,7 +31,15 @@ export async function submitBooking(input: BookingInput): Promise<ActionResult<{
   const unavailable = v.isBreakdown
     ? `Online booking is unavailable right now. For a breakdown, please call ${siteConfig.contact.breakdownPhoneDisplay} immediately.`
     : `Online booking is temporarily unavailable. Please call ${siteConfig.contact.phoneDisplay} or message us on Viber.`
-  if (!isSupabaseConfigured || !(process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)) {
+  const ready = isSupabaseConfigured && Boolean(process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)
+  if (DEMO_MODE) {
+    const session = await getSession()
+    if (session?.isDemo || !ready) {
+      const reference = demoSubmissions.booking(session, v)
+      return { ok: true, data: { reference, isBreakdown: v.isBreakdown } }
+    }
+  }
+  if (!ready) {
     return { ok: false, error: unavailable }
   }
 

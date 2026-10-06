@@ -701,3 +701,14 @@ export async function getServices(): Promise<Service[]> {
     sortOrder: s.sort_order,
   }))
 }
+
+/** Representative photo for a model name (portal job cards, hero). Falls back to a generic JAC truck. */
+export function truckImageForModel(model: string | null | undefined): { url: string; alt: string } {
+  const key = (model ?? "").replace(/^JAC\s+/i, "").trim().toLowerCase()
+  const hit =
+    fallbackTrucks.find((t) => t.model.toLowerCase() === key && t.condition === "new") ??
+    fallbackTrucks.find((t) => t.model.toLowerCase() === key) ??
+    fallbackTrucks.find((t) => key && t.model.toLowerCase().startsWith(key.split(" ")[0]))
+  const img = hit?.images[0]
+  return img ? { url: img.url, alt: img.alt } : { url: "/images/jac-light-truck-ph.webp", alt: "JAC truck" }
+}

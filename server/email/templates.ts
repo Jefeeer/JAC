@@ -22,12 +22,8 @@ const manilaDate = (d: string | Date, withTime = false) =>
     ...(withTime ? { hour: "numeric", minute: "2-digit" } : {}),
   }).format(typeof d === "string" ? new Date(d.length === 10 ? `${d}T00:00:00+08:00` : d) : d)
 
-export const TIME_SLOT_LABELS: Record<string, string> = {
-  "08:00-10:00": "8:00 – 10:00 AM",
-  "10:00-12:00": "10:00 AM – 12:00 NN",
-  "13:00-15:00": "1:00 – 3:00 PM",
-  "15:00-17:00": "3:00 – 5:00 PM",
-}
+export { TIME_SLOT_LABELS } from "@/lib/validation/booking"
+import { TIME_SLOT_LABELS } from "@/lib/validation/booking"
 
 const branchLine = (b: Branch | null | undefined) => (b ? `JAC Motors ${b.name} — ${b.address}, ${b.city}` : "Nearest JAC Motors branch")
 

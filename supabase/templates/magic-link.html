@@ -1,0 +1,36 @@
+<!--
+  JAC Motors — Supabase "Magic Link" + "Confirm signup" email template.
+  Supabase → Authentication → Emails → Templates → paste into BOTH
+  "Magic Link" and "Confirm signup". Subject: Your JAC Motors sign-in link
+  The link uses token_hash (works on any device); the 6-digit code is the fallback.
+-->
+<!doctype html>
+<html lang="en">
+<body style="margin:0;padding:0;background:#EEECE7;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#EEECE7">
+<tr><td align="center" style="padding:24px 12px;">
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:100%;max-width:600px;">
+    <tr><td bgcolor="#141518" style="padding:22px 32px;">
+      <img src="{{ .SiteURL }}/brand/jac-motors-logo-reversed.png" width="132" alt="JAC Motors" style="display:block;border:0;width:132px;height:auto;">
+    </td></tr>
+    <tr><td bgcolor="#D7000F" style="height:6px;font-size:0;line-height:0;">&nbsp;</td></tr>
+    <tr><td bgcolor="#FFFFFF" style="padding:36px 32px;">
+      <div style="font:bold 11px/1 'Courier New',monospace;letter-spacing:3px;text-transform:uppercase;color:#D7000F;">Customer portal</div>
+      <h1 style="margin:12px 0 20px;font:900 30px/1.05 'Arial Black',Arial,sans-serif;text-transform:uppercase;color:#16171A;">Your sign-in link</h1>
+      <p style="margin:0 0 24px;font:16px/1.6 Arial,sans-serif;color:#16171A;">Tap the button to sign in to the JAC Motors customer portal. The link expires in 1 hour and works once.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 28px;"><tr><td bgcolor="#D7000F" style="border-radius:3px;">
+        <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email" style="display:inline-block;padding:15px 26px;font:bold 13px/1 Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;color:#FFFFFF;text-decoration:none;">Sign in &rarr;</a>
+      </td></tr></table>
+      <p style="margin:0 0 8px;font:14px/1.5 Arial,sans-serif;color:#5E5C57;">Or enter this code on the sign-in page:</p>
+      <div style="display:inline-block;padding:12px 20px;border:2px dashed #E1DED6;font:bold 28px/1 'Courier New',monospace;letter-spacing:8px;color:#16171A;">{{ .Token }}</div>
+      <p style="margin:28px 0 0;font:13px/1.6 Arial,sans-serif;color:#5E5C57;">Didn't ask for this? You can ignore this email — nobody can sign in without it.</p>
+    </td></tr>
+    <tr><td bgcolor="#141518" style="padding:24px 32px;">
+      <div style="font:900 18px/1.1 'Arial Black',Arial,sans-serif;text-transform:uppercase;color:#F4F2EE;">Built to keep you <span style="color:#E8101E;">moving.</span></div>
+      <div style="margin-top:10px;font:12px/1.6 Arial,sans-serif;color:#A9A79F;">JAC Motors Philippines · Breakdown line (02) 8361-3333</div>
+    </td></tr>
+  </table>
+</td></tr>
+</table>
+</body>
+</html>

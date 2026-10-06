@@ -13,11 +13,21 @@ import {
   type TruckQuoteInput,
 } from "@/lib/validation/quote"
 import { resolveCustomerId } from "@/server/customers"
+import { DEMO_MODE } from "@/lib/demo/accounts"
+import { getSession } from "@/server/auth"
+import { demoSubmissions } from "@/server/demo/mutations"
 import { notifyQuoteCreated } from "@/server/notifications"
 import { getClientIp, looksLikeBot, rateLimit } from "@/server/security/guards"
 
 const UNAVAILABLE = `Online requests are temporarily unavailable. Please call ${siteConfig.contact.phoneDisplay} or message us on Viber — we'll take it from there.`
 const RATE_LIMITED = "You've sent several requests in a short time. Please wait a few minutes, or call us directly."
+
+/** DEMO MODE: store in the in-memory demo data when signed in as a demo persona or when Supabase isn't connected. */
+async function demoTarget() {
+  if (!DEMO_MODE) return null
+  const session = await getSession()
+  return session?.isDemo || !servicesReady() ? { session } : null
+}
 
 function servicesReady() {
   return isSupabaseConfigured && Boolean(process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY)
@@ -47,6 +57,22 @@ export async function submitTruckQuote(input: TruckQuoteInput): Promise<ActionRe
 
   const ip = await getClientIp()
   if (!(await rateLimit(`quote:${ip}`, 5, 600))) return { ok: false, error: RATE_LIMITED }
+  const demo = await demoTarget()
+  if (demo) {
+    const reference = demoSubmissions.quote(demo.session, {
+      type: "truck",
+      name: v.name,
+      email: v.email,
+      phone: v.phone,
+      company: v.company,
+      branch: v.branch,
+      message: v.message,
+      truckSlug: v.truckSlug,
+      financing: v.financing,
+      tradeIn: v.tradeIn,
+    })
+    return { ok: true, data: { reference } }
+  }
   if (!servicesReady()) return { ok: false, error: UNAVAILABLE }
 
   try {
@@ -102,6 +128,23 @@ export async function submitPartQuote(input: PartQuoteInput): Promise<ActionResu
 
   const ip = await getClientIp()
   if (!(await rateLimit(`quote:${ip}`, 5, 600))) return { ok: false, error: RATE_LIMITED }
+  const demo = await demoTarget()
+  if (demo) {
+    const vehicle = [v.truckModel && `Truck: ${v.truckModel}`, v.plateNumber && `Plate: ${v.plateNumber}`].filter(Boolean).join(" · ")
+    const reference = demoSubmissions.quote(demo.session, {
+      type: "part",
+      name: v.name,
+      email: v.email,
+      phone: v.phone,
+      company: v.company,
+      branch: v.branch,
+      quantity: v.quantity,
+      message: [vehicle, v.message].filter(Boolean).join("\n\n"),
+      partSlug: v.partSlug,
+      attachments: v.photoPaths.length,
+    })
+    return { ok: true, data: { reference } }
+  }
   if (!servicesReady()) return { ok: false, error: UNAVAILABLE }
 
   try {

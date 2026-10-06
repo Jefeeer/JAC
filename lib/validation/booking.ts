@@ -10,6 +10,13 @@ export const TIME_SLOT_OPTIONS: { value: (typeof TIME_SLOTS)[number]; label: str
   { value: "15:00-17:00", label: "3 – 5 PM", sub: "Late" },
 ]
 
+export const TIME_SLOT_LABELS: Record<string, string> = {
+  "08:00-10:00": "8:00 – 10:00 AM",
+  "10:00-12:00": "10:00 AM – 12:00 NN",
+  "13:00-15:00": "1:00 – 3:00 PM",
+  "15:00-17:00": "3:00 – 5:00 PM",
+}
+
 export const BOOKING_WINDOW_DAYS = 60
 
 /* --------------------------- Manila calendar helpers ------------------------ */
