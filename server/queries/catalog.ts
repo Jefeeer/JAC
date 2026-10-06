@@ -3,9 +3,20 @@ import "server-only"
 import { cache } from "react"
 import { createSupabasePublicClient } from "@/lib/supabase/public"
 import { isSupabaseConfigured } from "@/lib/supabase/env"
-import * as sample from "@/lib/data/seed-data"
 import { payloadRange, sanitizeSearch, type PartFilters, type TruckFilters } from "@/lib/validation/catalog"
-import { stockStatusFor, type BodyType, type Part, type PartCategory, type Service, type Truck } from "@/types/domain"
+import { DEMO_MODE } from "@/lib/demo/accounts"
+import { demoDb } from "@/server/demo/store"
+import { staticCategories, staticParts, staticServices, staticTrucks } from "./static-catalog"
+import { type BodyType, type Part, type PartCategory, type Service, type Truck } from "@/types/domain"
+
+/**
+ * Offline catalog source: the DEMO MODE store (so admin edits show on the
+ * public site) or the static sample data. Public reads only see published items.
+ */
+export const localTrucks = (): Truck[] => (DEMO_MODE ? demoDb().trucks.filter((t) => t.isPublished) : staticTrucks)
+export const localParts = (): Part[] => (DEMO_MODE ? demoDb().parts.filter((p) => p.isPublished) : staticParts)
+export const fallbackCategories = staticCategories
+export const fallbackServices = staticServices
 
 export const TRUCK_PAGE_SIZE = 12
 export const PART_PAGE_SIZE = 20
@@ -125,12 +136,6 @@ export function mapTruck(row: TruckRow): Truck {
   }
 }
 
-export const fallbackTrucks: Truck[] = sample.trucks.map((t, i) => ({
-  ...t,
-  id: `sample-truck-${i}`,
-  currency: "PHP",
-  isPublished: true,
-}))
 
 /** In-memory equivalent of the Supabase filters (offline mode + tests). */
 function filterTrucksLocal(list: Truck[], f: TruckFilters) {
@@ -182,7 +187,7 @@ export async function searchTrucks(f: TruckFilters): Promise<Paged<Truck>> {
 
   if (!isSupabaseConfigured) {
     warnFallback("searchTrucks")
-    const all = filterTrucksLocal(fallbackTrucks, f)
+    const all = filterTrucksLocal(localTrucks(), f)
     return paged(all.slice(from, from + size), all.length, f.page, size)
   }
 
@@ -230,7 +235,7 @@ export async function searchTrucks(f: TruckFilters): Promise<Paged<Truck>> {
   const { data, error, count } = await query
   if (error) {
     warnFallback("searchTrucks", error)
-    const all = filterTrucksLocal(fallbackTrucks, f)
+    const all = filterTrucksLocal(localTrucks(), f)
     return paged(all.slice(from, from + size), all.length, f.page, size)
   }
   return paged((data as unknown as TruckRow[]).map(mapTruck), count ?? 0, f.page, size)
@@ -272,7 +277,7 @@ function facetsFrom(
 }
 
 export const getTruckFacets = cache(async (): Promise<TruckFacets> => {
-  if (!isSupabaseConfigured) return facetsFrom(fallbackTrucks)
+  if (!isSupabaseConfigured) return facetsFrom(localTrucks())
   const supabase = createSupabasePublicClient()
   const { data, error } = await supabase
     .from("trucks")
@@ -280,7 +285,7 @@ export const getTruckFacets = cache(async (): Promise<TruckFacets> => {
     .eq("is_published", true)
   if (error) {
     warnFallback("getTruckFacets", error)
-    return facetsFrom(fallbackTrucks)
+    return facetsFrom(localTrucks())
   }
   return facetsFrom(
     data.map((r) => ({
@@ -297,18 +302,18 @@ export const getTruckFacets = cache(async (): Promise<TruckFacets> => {
 })
 
 export const getTruckBySlug = cache(async (slug: string): Promise<Truck | null> => {
-  if (!isSupabaseConfigured) return fallbackTrucks.find((t) => t.slug === slug) ?? null
+  if (!isSupabaseConfigured) return localTrucks().find((t) => t.slug === slug) ?? null
   const supabase = createSupabasePublicClient()
   const { data, error } = await supabase.from("trucks").select(TRUCK_SELECT).eq("slug", slug).eq("is_published", true).maybeSingle()
   if (error) {
     warnFallback("getTruckBySlug", error)
-    return fallbackTrucks.find((t) => t.slug === slug) ?? null
+    return localTrucks().find((t) => t.slug === slug) ?? null
   }
   return data ? mapTruck(data as unknown as TruckRow) : null
 })
 
 export async function getRelatedTrucks(truck: Truck, limit = 3): Promise<Truck[]> {
-  let pool: Truck[] = fallbackTrucks
+  let pool: Truck[] = localTrucks()
   if (isSupabaseConfigured) {
     const supabase = createSupabasePublicClient()
     const { data, error } = await supabase
@@ -339,17 +344,17 @@ export async function getRelatedTrucks(truck: Truck, limit = 3): Promise<Truck[]
 }
 
 export async function getTruckSlugs(): Promise<string[]> {
-  if (!isSupabaseConfigured) return fallbackTrucks.map((t) => t.slug)
+  if (!isSupabaseConfigured) return localTrucks().map((t) => t.slug)
   const supabase = createSupabasePublicClient()
   const { data, error } = await supabase.from("trucks").select("slug").eq("is_published", true)
-  if (error) return fallbackTrucks.map((t) => t.slug)
+  if (error) return localTrucks().map((t) => t.slug)
   return data.map((r) => r.slug)
 }
 
 export async function getFeaturedTrucks(limit = 6): Promise<Truck[]> {
   if (!isSupabaseConfigured) {
     warnFallback("getFeaturedTrucks")
-    return fallbackTrucks.filter((t) => t.isFeatured && t.availability !== "sold").slice(0, limit)
+    return localTrucks().filter((t) => t.isFeatured && t.availability !== "sold").slice(0, limit)
   }
 
   const supabase = createSupabasePublicClient()
@@ -364,7 +369,7 @@ export async function getFeaturedTrucks(limit = 6): Promise<Truck[]> {
 
   if (error) {
     warnFallback("getFeaturedTrucks", error)
-    return fallbackTrucks.filter((t) => t.isFeatured).slice(0, limit)
+    return localTrucks().filter((t) => t.isFeatured).slice(0, limit)
   }
   return (data as unknown as TruckRow[]).map(mapTruck)
 }
@@ -373,7 +378,7 @@ export async function getFeaturedTrucks(limit = 6): Promise<Truck[]> {
 export async function getLineup(): Promise<
   { model: string; series: string | null; bodyType: BodyType; payloadTons: number; slug: string }[]
 > {
-  let rows: Truck[] = fallbackTrucks
+  let rows: Truck[] = localTrucks()
   if (isSupabaseConfigured) {
     const supabase = createSupabasePublicClient()
     const { data, error } = await supabase.from("trucks").select(TRUCK_SELECT).eq("is_published", true).eq("condition", "new")
@@ -461,15 +466,7 @@ export function mapPart(row: PartRow): Part {
   }
 }
 
-export const fallbackParts: Part[] = sample.parts.map((p, i) => ({
-  ...p,
-  id: `sample-part-${i}`,
-  currency: "PHP",
-  isPublished: true,
-  stockStatus: stockStatusFor(p.stockQty, p.reorderLevel),
-}))
 
-export const fallbackCategories: PartCategory[] = sample.partCategories.map((c, i) => ({ ...c, id: `sample-cat-${i}` }))
 
 function filterPartsLocal(list: Part[], f: PartFilters) {
   const q = sanitizeSearch(f.q)?.toLowerCase()
@@ -518,7 +515,7 @@ export async function searchParts(f: PartFilters): Promise<Paged<Part>> {
 
   if (!isSupabaseConfigured) {
     warnFallback("searchParts")
-    const all = filterPartsLocal(fallbackParts, f)
+    const all = filterPartsLocal(localParts(), f)
     return paged(all.slice(from, from + size), all.length, f.page, size)
   }
 
@@ -564,7 +561,7 @@ export async function searchParts(f: PartFilters): Promise<Paged<Part>> {
   const { data, error, count } = await query
   if (error) {
     warnFallback("searchParts", error)
-    const all = filterPartsLocal(fallbackParts, f)
+    const all = filterPartsLocal(localParts(), f)
     return paged(all.slice(from, from + size), all.length, f.page, size)
   }
   return paged((data as unknown as PartRow[]).map(mapPart), count ?? 0, f.page, size)
@@ -578,7 +575,7 @@ export const getPartCategories = cache(async (): Promise<CategoryWithCount[]> =>
       .map((c) => ({ ...c, count: parts.filter((p) => p.categorySlug === c.slug).length }))
       .sort((a, b) => a.sortOrder - b.sortOrder)
 
-  if (!isSupabaseConfigured) return withCounts(fallbackCategories, fallbackParts)
+  if (!isSupabaseConfigured) return withCounts(fallbackCategories, localParts())
   const supabase = createSupabasePublicClient()
   const [cats, parts] = await Promise.all([
     supabase.from("part_categories").select("id, slug, name, description, icon, sort_order").order("sort_order"),
@@ -586,7 +583,7 @@ export const getPartCategories = cache(async (): Promise<CategoryWithCount[]> =>
   ])
   if (cats.error || parts.error) {
     warnFallback("getPartCategories", cats.error ?? parts.error)
-    return withCounts(fallbackCategories, fallbackParts)
+    return withCounts(fallbackCategories, localParts())
   }
   return withCounts(
     cats.data.map((c) => ({ id: c.id, slug: c.slug, name: c.name, description: c.description, icon: c.icon, sortOrder: c.sort_order })),
@@ -598,18 +595,18 @@ export const getPartCategories = cache(async (): Promise<CategoryWithCount[]> =>
 export const getPartModels = cache(async (): Promise<string[]> => {
   const sortModels = (models: string[]) =>
     [...new Set(models)].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
-  if (!isSupabaseConfigured) return sortModels(fallbackParts.flatMap((p) => p.compatibility.map((c) => c.model)))
+  if (!isSupabaseConfigured) return sortModels(localParts().flatMap((p) => p.compatibility.map((c) => c.model)))
   const supabase = createSupabasePublicClient()
   const { data, error } = await supabase.from("part_compatibility").select("model")
   if (error) {
     warnFallback("getPartModels", error)
-    return sortModels(fallbackParts.flatMap((p) => p.compatibility.map((c) => c.model)))
+    return sortModels(localParts().flatMap((p) => p.compatibility.map((c) => c.model)))
   }
   return sortModels(data.map((r) => r.model))
 })
 
 export const getPartBySlug = cache(async (slug: string): Promise<Part | null> => {
-  if (!isSupabaseConfigured) return fallbackParts.find((p) => p.slug === slug) ?? null
+  if (!isSupabaseConfigured) return localParts().find((p) => p.slug === slug) ?? null
   const supabase = createSupabasePublicClient()
   const { data, error } = await supabase
     .from("parts")
@@ -619,7 +616,7 @@ export const getPartBySlug = cache(async (slug: string): Promise<Part | null> =>
     .maybeSingle()
   if (error) {
     warnFallback("getPartBySlug", error)
-    return fallbackParts.find((p) => p.slug === slug) ?? null
+    return localParts().find((p) => p.slug === slug) ?? null
   }
   return data ? mapPart(data as unknown as PartRow) : null
 })
@@ -638,7 +635,7 @@ export async function getRelatedParts(part: Part, limit = 4): Promise<Part[]> {
       .slice(0, limit)
       .map((x) => x.p)
 
-  if (!isSupabaseConfigured) return rank(fallbackParts)
+  if (!isSupabaseConfigured) return rank(localParts())
   const supabase = createSupabasePublicClient()
   const { data, error } = await supabase
     .from("parts")
@@ -648,16 +645,16 @@ export async function getRelatedParts(part: Part, limit = 4): Promise<Part[]> {
     .limit(60)
   if (error) {
     warnFallback("getRelatedParts", error)
-    return rank(fallbackParts)
+    return rank(localParts())
   }
   return rank((data as unknown as PartRow[]).map(mapPart))
 }
 
 export async function getPartSlugs(): Promise<string[]> {
-  if (!isSupabaseConfigured) return fallbackParts.map((p) => p.slug)
+  if (!isSupabaseConfigured) return localParts().map((p) => p.slug)
   const supabase = createSupabasePublicClient()
   const { data, error } = await supabase.from("parts").select("slug").eq("is_published", true)
-  if (error) return fallbackParts.map((p) => p.slug)
+  if (error) return localParts().map((p) => p.slug)
   return data.map((r) => r.slug)
 }
 
@@ -665,7 +662,6 @@ export async function getPartSlugs(): Promise<string[]> {
 /*  Services                                                                  */
 /* ========================================================================== */
 
-export const fallbackServices: Service[] = sample.services.map((s, i) => ({ ...s, id: `sample-service-${i}` }))
 
 export async function getServices(): Promise<Service[]> {
   if (!isSupabaseConfigured) {
@@ -706,9 +702,9 @@ export async function getServices(): Promise<Service[]> {
 export function truckImageForModel(model: string | null | undefined): { url: string; alt: string } {
   const key = (model ?? "").replace(/^JAC\s+/i, "").trim().toLowerCase()
   const hit =
-    fallbackTrucks.find((t) => t.model.toLowerCase() === key && t.condition === "new") ??
-    fallbackTrucks.find((t) => t.model.toLowerCase() === key) ??
-    fallbackTrucks.find((t) => key && t.model.toLowerCase().startsWith(key.split(" ")[0]))
+    localTrucks().find((t) => t.model.toLowerCase() === key && t.condition === "new") ??
+    localTrucks().find((t) => t.model.toLowerCase() === key) ??
+    localTrucks().find((t) => key && t.model.toLowerCase().startsWith(key.split(" ")[0]))
   const img = hit?.images[0]
   return img ? { url: img.url, alt: img.alt } : { url: "/images/jac-light-truck-ph.webp", alt: "JAC truck" }
 }

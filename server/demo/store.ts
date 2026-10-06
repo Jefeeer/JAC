@@ -2,7 +2,8 @@ import "server-only"
 
 import { randomUUID } from "node:crypto"
 import { DEMO_ACCOUNTS } from "@/lib/demo/accounts"
-import { JOB_STATUS_FLOW, type BookingStatus, type JobStatus, type QuoteStatus, type QuoteType, type UserRole } from "@/types/domain"
+import { staticParts, staticTrucks } from "@/server/queries/static-catalog"
+import { JOB_STATUS_FLOW, type BookingStatus, type JobStatus, type Part, type QuoteStatus, type QuoteType, type Truck, type UserRole } from "@/types/domain"
 
 /**
  * DEMO MODE data store — an in-memory stand-in for the Supabase tables,
@@ -141,6 +142,27 @@ export type DNotification = {
   createdAt: string
 }
 export type DStaffNote = { id: string; entityType: string; entityId: string; body: string; authorId: string; createdAt: string }
+export type DInvoice = {
+  id: string
+  reference: string
+  customerId: string | null
+  jobId: string | null
+  quoteId: string | null
+  branchSlug: string | null
+  status: "draft" | "issued" | "partially_paid" | "paid" | "void"
+  billToName: string
+  billToCompany: string | null
+  billToTin: string | null
+  billToAddress: string | null
+  discount: number
+  vatRate: number
+  amountPaid: number
+  issuedAt: string | null
+  dueDate: string | null
+  notes: string | null
+  createdAt: string
+}
+export type DInvoiceItem = { id: string; invoiceId: string; type: "labor" | "part" | "truck" | "misc"; description: string; quantity: number; unitPrice: number }
 
 export type DemoDb = {
   seededAt: number
@@ -157,6 +179,10 @@ export type DemoDb = {
   quoteItems: DQuoteItem[]
   notifications: DNotification[]
   staffNotes: DStaffNote[]
+  trucks: Truck[]
+  parts: Part[]
+  invoices: DInvoice[]
+  invoiceItems: DInvoiceItem[]
 }
 
 export const AUTO_STEP_MS = 40_000
@@ -197,6 +223,10 @@ function seed(): DemoDb {
     quoteItems: [],
     notifications: [],
     staffNotes: [],
+    trucks: structuredClone(staticTrucks),
+    parts: structuredClone(staticParts),
+    invoices: [],
+    invoiceItems: [],
   }
 
   /* companies + customers */
@@ -221,7 +251,8 @@ function seed(): DemoDb {
   const lgu: DCustomer = { id: randomUUID(), profileId: null, companyId: null, fullName: "Engr. Liza Ramos (LGU Motorpool)", email: "motorpool@lgu.demo", phone: "0920 555 0404", createdAt: iso(now - 30 * DAY) }
   const lead1: DCustomer = { id: randomUUID(), profileId: null, companyId: null, fullName: "Paolo Cruz", email: "paolo.cruz@example.ph", phone: "0921 555 0505", createdAt: iso(now - 2 * DAY) }
   const lead2: DCustomer = { id: randomUUID(), profileId: null, companyId: null, fullName: "Grace Lim", email: "grace@limfoods.demo", phone: "0922 555 0606", createdAt: iso(now - 0.3 * DAY) }
-  db.customers.push(ana, ben, marco, lgu, lead1, lead2)
+  const ramon: DCustomer = { id: randomUUID(), profileId: null, companyId: null, fullName: "Ramon Villanueva", email: "ramon.v@example.ph", phone: "0923 555 0707", createdAt: iso(now - 25 * 60_000) }
+  db.customers.push(ana, ben, marco, lgu, lead1, lead2, ramon)
 
   /* fleet */
   const unit = (u: Partial<DFleet> & Pick<DFleet, "customerId" | "model">): DFleet => ({
@@ -460,6 +491,7 @@ function seed(): DemoDb {
       createdAt: iso(now - 0.1 * DAY),
     }),
     booking({
+      customerId: ramon.id,
       contactName: "Ramon Villanueva",
       contactEmail: "ramon.v@example.ph",
       contactPhone: "0923 555 0707",
@@ -598,6 +630,58 @@ function seed(): DemoDb {
   notify({ recipientId: null, recipientRole: "service_advisor", type: "booking.received", title: "BREAKDOWN booking", body: "Ramon Villanueva · N35", link: "/admin/bookings", createdAt: iso(now - 25 * 60_000) })
   notify({ recipientId: null, recipientRole: "sales", type: "quote.created", title: "New truck quote request", body: `${q3.reference} · Paolo Cruz`, link: `/admin/quotes/${q3.id}`, createdAt: iso(now - 2 * DAY) })
   notify({ recipientId: null, recipientRole: "parts", type: "quote.created", title: "New part quote request", body: `${q4.reference} · Grace Lim`, link: `/admin/quotes/${q4.id}`, createdAt: iso(now - 0.3 * DAY) })
+
+  for (const j of db.jobs.filter((x) => x.status === "released")) {
+    const inv: DInvoice = {
+      id: randomUUID(),
+      reference: nextReference(db, "INV"),
+      customerId: j.customerId,
+      jobId: j.id,
+      quoteId: null,
+      branchSlug: j.branchSlug,
+      status: "paid",
+      billToName: "Reyes Cold Chain Logistics",
+      billToCompany: "Reyes Cold Chain Logistics",
+      billToTin: "123-456-789-000",
+      billToAddress: "12 Mindanao Ave, Quezon City",
+      discount: 0,
+      vatRate: 0.12,
+      amountPaid: 0,
+      issuedAt: j.releasedAt,
+      dueDate: null,
+      notes: null,
+      createdAt: j.releasedAt ?? iso(now),
+    }
+    db.invoices.push(inv)
+    for (const it of db.jobItems.filter((i) => i.jobId === j.id)) db.invoiceItems.push({ id: randomUUID(), invoiceId: inv.id, type: it.type, description: it.description, quantity: it.quantity, unitPrice: it.unitPrice })
+  }
+  // Truck sales this month (accepted quote → invoice) for the sales KPI
+  const sold = db.trucks.find((t) => t.availability === "sold")
+  if (sold) {
+    const inv: DInvoice = {
+      id: randomUUID(),
+      reference: nextReference(db, "INV"),
+      customerId: marco.id,
+      jobId: null,
+      quoteId: null,
+      branchSlug: "north-edsa",
+      status: "paid",
+      billToName: "Marco Dela Paz",
+      billToCompany: hardwareCo.name,
+      billToTin: null,
+      billToAddress: "Dasmariñas, Cavite",
+      discount: 0,
+      vatRate: 0.12,
+      amountPaid: 0,
+      // a few hours ago, so "Sales this month" is populated whatever the date
+      issuedAt: iso(now - 3 * 3600_000),
+      dueDate: null,
+      notes: null,
+      createdAt: iso(now - 3 * 3600_000),
+    }
+    db.invoices.push(inv)
+    db.invoiceItems.push({ id: randomUUID(), invoiceId: inv.id, type: "truck", description: sold.title, quantity: 1, unitPrice: Math.round((sold.price ?? 0) / 1.12) })
+  }
 
   db.staffNotes.push({ id: randomUUID(), entityType: "job_order", entityId: ready.id, body: "Customer prefers pickup after 4 PM. Call Ana before release.", authorId: ids.jun, createdAt: iso(now - 2 * 3600_000) })
 

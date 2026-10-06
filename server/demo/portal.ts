@@ -1,7 +1,6 @@
 import "server-only"
 
 import { branches } from "@/lib/config/branches"
-import { fallbackParts, fallbackTrucks } from "@/server/queries/catalog"
 import type { FleetUnit, PortalBooking, PortalJob, PortalNotification, PortalQuote } from "@/server/queries/portal"
 import { demoDb, tickDemo, type DBooking, type DFleet, type DJob, type DQuote, type DemoDb } from "./store"
 
@@ -27,8 +26,8 @@ const quoteTotals = (d: DemoDb, q: DQuote) => {
 }
 
 function mapQuote(d: DemoDb, q: DQuote): PortalQuote {
-  const truck = q.truckSlug ? fallbackTrucks.find((t) => t.slug === q.truckSlug) : null
-  const part = q.partSlug ? fallbackParts.find((p) => p.slug === q.partSlug) : null
+  const truck = q.truckSlug ? d.trucks.find((t) => t.slug === q.truckSlug) : null
+  const part = q.partSlug ? d.parts.find((p) => p.slug === q.partSlug) : null
   return {
     id: q.id,
     reference: q.reference,
@@ -170,7 +169,7 @@ export const demoPortal = {
       terms: q.terms,
       respondedAt: q.respondedAt,
       branchName: branches.find((b) => b.slug === q.branchSlug)?.name ?? null,
-      pdfUrl: null as string | null,
+      pdfUrl: ["quoted", "accepted"].includes(q.status) && t.items.length ? `/api/documents/quotes/${q.id}` : (null as string | null),
       items: visibleItems.map((i) => ({ id: i.id, description: i.description, quantity: i.quantity, unitPrice: i.unitPrice, lineTotal: Math.round(i.quantity * i.unitPrice * 100) / 100 })),
     }
   },

@@ -94,6 +94,11 @@ export default async function rlsSuite(db, q) {
   ok("mechanic cannot change totals", !!(await tryq(`update job_orders set labor_total=1 where id='${joId}'`)).error)
   ok("mechanic cannot release", !!(await tryq(`update job_orders set status='released' where id='${joId}'`)).error)
   ok("mechanic cannot read quotes", (await n(`select count(*) n from quotes`)) === 0)
+  {
+    const [ev] = await q(`select id from job_order_events where job_order_id='${joId}' order by created_at desc limit 1`)
+    ok("mechanic annotates timeline note", !(await tryq(`update job_order_events set note='Shoes worn to 1.2 mm' where id='${ev.id}'`)).error)
+    ok("mechanic cannot rewrite event status", !!(await tryq(`update job_order_events set to_status='released' where id='${ev.id}'`)).error)
+  }
   ok("mechanic sets ready", !(await tryq(`update job_orders set status='ready' where id='${joId}'`)).error)
 
   // --- customer A live status
@@ -103,6 +108,10 @@ export default async function rlsSuite(db, q) {
   const notes = await q(`select id, type from notifications where recipient_id='${ua.id}' order by created_at`)
   ok("A got job.ready notification", notes.some((x) => x.type === "job.ready"))
   ok("A can mark notification read", !(await tryq(`update notifications set read_at=now() where id='${notes[0].id}'`)).error)
+  {
+    const [ev] = await q(`select id from job_order_events order by created_at desc limit 1`)
+    ok("customer cannot annotate events (0 rows)", (await tryq(`update job_order_events set note='x' where id='${ev.id}' returning id`)).rows?.length === 0)
+  }
   ok("A cannot rewrite notification", !!(await tryq(`update notifications set title='hacked' where id='${notes[0].id}'`)).error)
   ok("A cannot see staff note", (await n(`select count(*) n from staff_notes`)) === 0)
   ok("A sees job items", (await n(`select count(*) n from job_order_items`)) === 2)

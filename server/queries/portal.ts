@@ -101,10 +101,11 @@ export async function getQuote(id: string) {
     items: { id: string; description: string; quantity: string | number; unit_price: string | number; line_total: string | number; sort_order: number }[]
   }
 
-  let pdfUrl: string | null = null
+  // Stored PDF (Python service) when present, otherwise render on demand once priced.
+  let pdfUrl: string | null = ["quoted", "accepted"].includes(r.status) && r.items?.length ? `/api/documents/quotes/${r.id}` : null
   if (r.pdf_path) {
     const { data: pdf } = await supabase.storage.from("documents").createSignedUrl(r.pdf_path, 60 * 60)
-    pdfUrl = pdf?.signedUrl ?? null
+    pdfUrl = pdf?.signedUrl ?? pdfUrl
   }
 
   return {

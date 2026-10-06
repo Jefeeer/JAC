@@ -13,6 +13,7 @@ import {
   bookingStatusCustomer,
   jobStatusCustomer,
   quoteNewStaff,
+  quoteReadyCustomer,
   quoteReceivedCustomer,
   type BookingEmailData,
   type QuoteEmailData,
@@ -219,5 +220,31 @@ export const notifyJobStatus = safe("notifyJobStatus", async (jobId: string, sta
     status === "ready"
       ? sendSms(customer.phone, `JAC Motors: your JAC ${j.truck_model}${j.plate_number ? ` (${j.plate_number})` : ""} is ready for release. Ref ${j.reference}.`)
       : Promise.resolve(),
+  ])
+})
+
+/** Staff marked a quote "quoted": in-app notice (service role) + customer email. */
+export const notifyQuoteReady = safe("notifyQuoteReady", async (quoteId: string) => {
+  const admin = createSupabaseAdminClient()
+  const { data: q, error } = await admin
+    .from("quotes")
+    .select("id, reference, contact_name, contact_email, total, valid_until, response_message, truck:trucks(title), part:parts(name, part_number), customer:customers(profile_id)")
+    .eq("id", quoteId)
+    .single()
+  if (error || !q) throw error ?? new Error("quote not found")
+  const truck = q.truck as unknown as { title: string } | null
+  const part = q.part as unknown as { name: string; part_number: string } | null
+  const subjectLine = truck?.title ?? (part ? `${part.part_number} · ${part.name}` : "Your enquiry")
+  const profileId = (q.customer as unknown as { profile_id: string | null } | null)?.profile_id
+  await Promise.all([
+    profileId
+      ? admin.from("notifications").insert({ recipient_id: profileId, type: "quote.quoted", title: "Your quote is ready", body: `${q.reference} · ${subjectLine}`, link: `/account/quotes/${q.id}`, data: { quote_id: q.id } })
+      : Promise.resolve(),
+    sendEmail(quoteReadyCustomer({ id: q.id, reference: q.reference, contactName: q.contact_name, subjectLine, total: Number(q.total), validUntil: q.valid_until, responseMessage: q.response_message }), {
+      to: q.contact_email,
+      replyTo: siteConfig.contact.email,
+      idempotencyKey: `quote-ready-${q.id}-${Number(q.total)}`,
+      tags: { kind: "quote_ready" },
+    }),
   ])
 })

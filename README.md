@@ -22,8 +22,8 @@
 | 3 | Trucks + parts catalog (public), quote forms, financing calculator | ✅ |
 | 4 | Book Service form, branded email + SMS notifications, status webhooks | ✅ |
 | 5 | Auth (magic link + code) + customer portal, demo mode | ✅ |
-| 6 | Admin panel | ⏳ next |
-| 7 | Python service (imports, PDFs, reports, reminders) | ⏳ |
+| 6 | Admin panel: role-based dashboard, job board, bookings, quotes + PDF, trucks, parts + import, customers | ✅ |
+| 7 | Python service (imports, PDFs, reports, reminders) | ⏳ next |
 | 8 | SEO, performance pass, deployment docs | ⏳ |
 
 ---
@@ -42,6 +42,8 @@
 │   │   ├── book-service/       # service / breakdown booking form
 │   ├── (auth)/login/           # magic link + 6-digit code sign-in, demo personas
 │   ├── (portal)/account/       # customer portal: dashboard, fleet, jobs (live), bookings, quotes, notifications, profile
+│   ├── (admin)/admin/          # staff panel: dashboard, job board, bookings, quotes, trucks, parts (+import), customers, notifications
+│   ├── api/documents/          # quote + invoice PDFs (rendered on request, access-checked)
 │   ├── auth/confirm/           # magic-link landing (token_hash or PKCE code)
 │   ├── api/webhooks/supabase/  # DB webhook → booking & job status emails/SMS
 │   ├── api/dev/emails/         # dev-only email previews
@@ -68,7 +70,10 @@
 │   ├── format.ts               # ₱ / km / tonnes formatting
 │   └── photo-credits.json
 ├── server/
-│   ├── actions/                # Server Actions: quotes, bookings, signed upload URLs
+│   ├── actions/                # Server Actions: quotes, bookings, uploads, portal, admin
+│   ├── admin/                  # admin repository (Supabase + demo), permissions matrix
+│   ├── demo/                   # DEMO MODE store, session, portal + mutations
+│   ├── pdf/                    # branded quote/invoice PDFs (pdf-lib fallback)
 │   ├── email/                  # branded email layout, templates, Resend sender
 │   ├── notifications/          # email/SMS fan-out for quotes, bookings, job status
 │   ├── sms.ts                  # optional Twilio SMS
@@ -117,7 +122,7 @@ Demo data lives in server memory (`server/demo/*`), is shared by all demo sessio
 | --- | --- |
 | `npm run dev` / `build` / `start` | Next.js |
 | `npm run lint` / `typecheck` | ESLint / `tsc --noEmit` |
-| `npm run db:test` | Applies every migration + seed in PGlite and runs 60 RLS/trigger assertions |
+| `npm run db:test` | Applies every migration + seed in PGlite and runs 63 RLS/trigger assertions |
 | `npm run db:seed:generate` | Regenerates `supabase/seed.sql` from `lib/data/seed-data.ts` |
 | `npm run db:types` | Generates Supabase TS types (requires a linked project) |
 
@@ -147,7 +152,8 @@ Paste and run, in order:
 2. `supabase/migrations/20261006000200_security_rls.sql`
 3. `supabase/migrations/20261006000300_storage.sql`
 4. `supabase/migrations/20261006000400_booking_notifications.sql`
-5. `supabase/seed.sql` (optional sample data)
+5. `supabase/migrations/20261006000500_job_event_notes.sql`
+6. `supabase/seed.sql` (optional sample data)
 
 ### 3. Auth settings
 - **Authentication → Providers → Email**: enable (magic link / OTP).
@@ -173,6 +179,18 @@ Highlights:
 - Quote / job / invoice totals are recomputed from line items by triggers; PH VAT 12% default.
 - `fleet_unit_maintenance` view computes next-service km/date and `ok | due_soon | overdue`.
 - Full-text + trigram search on trucks and parts.
+
+### Admin roles
+
+| Role | Sees |
+| --- | --- |
+| admin | Everything, incl. deleting trucks |
+| sales | Trucks (CRUD, photos, publish), quotes (defaults to truck quotes), customers, bookings (read) |
+| parts | Parts & stock (CRUD, CSV import), quotes (parts), customers, job items |
+| service_advisor | Bookings (confirm / reschedule / convert), job board (full), quotes (service), customers, invoices |
+| mechanic | Only jobs assigned to them; move stages diagnosing → ready, add items and notes; cannot release/cancel |
+
+The UI hides what a role can’t do (`server/admin/permissions.ts`), and RLS enforces it in the database.
 
 ### Security model
 

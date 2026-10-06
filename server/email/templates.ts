@@ -347,3 +347,27 @@ export function jobStatusCustomer(j: JobEmailData): RenderedEmail {
     reason: `You're receiving this because JAC Motors is servicing your truck under job order ${j.reference}.`,
   })
 }
+
+export function quoteReadyCustomer(q: { id: string; reference: string; contactName: string; subjectLine: string; total: number; validUntil: string | null; responseMessage: string | null }): RenderedEmail {
+  const first = q.contactName.split(" ")[0]
+  return render(`Your quotation is ready — ${q.reference}`, {
+    preheader: `${q.subjectLine} · ${formatPeso(q.total)}`,
+    eyebrow: "Quotation ready",
+    heading: `Here's your price, ${first}.`,
+    blocks: [
+      ...(q.responseMessage ? ([{ type: "paragraph", text: q.responseMessage }] as EmailBlock[]) : []),
+      { type: "reference", label: "Total (VAT incl.)", value: formatPeso(q.total) },
+      {
+        type: "details",
+        rows: [
+          ["Reference", q.reference],
+          ["For", q.subjectLine],
+          ["Valid until", q.validUntil ? manilaDate(q.validUntil) : null],
+        ],
+      },
+      { type: "button", label: "View quotation & PDF", href: absUrl(`/account/quotes/${q.id}`) },
+      { type: "callout", tone: "info", title: "Ready to go ahead?", text: "Reply to this email or call your consultant — we'll prepare the paperwork and reserve the stock." },
+    ],
+    reason: `You're receiving this because you requested a quote (${q.reference}) from JAC Motors.`,
+  })
+}
