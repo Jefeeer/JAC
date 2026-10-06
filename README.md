@@ -20,8 +20,8 @@
 | 1 | Project setup, design system, JAC branding, layout, home page | ✅ |
 | 2 | Supabase schema, RLS, storage, seed data, DB test suite | ✅ |
 | 3 | Trucks + parts catalog (public), quote forms, financing calculator | ✅ |
-| 4 | Booking form + email notifications (quote forms shipped in step 3) | ⏳ next |
-| 5 | Auth + customer portal | ⏳ |
+| 4 | Book Service form, branded email + SMS notifications, status webhooks | ✅ |
+| 5 | Auth + customer portal | ⏳ next |
 | 6 | Admin panel | ⏳ |
 | 7 | Python service (imports, PDFs, reports, reminders) | ⏳ |
 | 8 | SEO, performance pass, deployment docs | ⏳ |
@@ -39,6 +39,9 @@
 │   │   ├── trucks/[slug]/      # truck detail (SSG + ISR 1 h): gallery, specs, calculator, quote form
 │   │   ├── parts/(list)/       # /parts — part no./name search, fits-my-truck, categories, stock
 │   │   ├── parts/[slug]/       # part detail (SSG + ISR 1 h): fitment, specs, quote form + photo upload
+│   │   ├── book-service/       # service / breakdown booking form
+│   ├── api/webhooks/supabase/  # DB webhook → booking & job status emails/SMS
+│   ├── api/dev/emails/         # dev-only email previews
 │   │   ├── credits/            # photo attribution
 │   │   ├── loading.tsx · error.tsx
 │   ├── layout.tsx              # fonts, theme, providers, global metadata
@@ -62,7 +65,10 @@
 │   ├── format.ts               # ₱ / km / tonnes formatting
 │   └── photo-credits.json
 ├── server/
-│   ├── actions/quotes.ts       # Server Actions: truck/part quotes, signed upload URLs
+│   ├── actions/                # Server Actions: quotes, bookings, signed upload URLs
+│   ├── email/                  # branded email layout, templates, Resend sender
+│   ├── notifications/          # email/SMS fan-out for quotes, bookings, job status
+│   ├── sms.ts                  # optional Twilio SMS
 │   ├── queries/catalog.ts      # catalog reads (Supabase → domain types, sample-data fallback)
 │   ├── security/guards.ts      # IP rate limit (Postgres-backed), honeypot + timing check
 │   └── customers.ts            # customer resolution for form submissions
@@ -96,7 +102,7 @@ The site runs **without Supabase** — catalog queries fall back to the sample d
 | --- | --- |
 | `npm run dev` / `build` / `start` | Next.js |
 | `npm run lint` / `typecheck` | ESLint / `tsc --noEmit` |
-| `npm run db:test` | Applies every migration + seed in PGlite and runs 59 RLS/trigger assertions |
+| `npm run db:test` | Applies every migration + seed in PGlite and runs 60 RLS/trigger assertions |
 | `npm run db:seed:generate` | Regenerates `supabase/seed.sql` from `lib/data/seed-data.ts` |
 | `npm run db:types` | Generates Supabase TS types (requires a linked project) |
 
@@ -125,7 +131,8 @@ Paste and run, in order:
 1. `supabase/migrations/20261006000100_core_schema.sql`
 2. `supabase/migrations/20261006000200_security_rls.sql`
 3. `supabase/migrations/20261006000300_storage.sql`
-4. `supabase/seed.sql` (optional sample data)
+4. `supabase/migrations/20261006000400_booking_notifications.sql`
+5. `supabase/seed.sql` (optional sample data)
 
 ### 3. Auth settings
 - **Authentication → Providers → Email**: enable, magic link on.
@@ -160,6 +167,30 @@ Highlights:
 - Public form submissions go through Server Actions (Zod + honeypot + `hit_rate_limit()`), using the service-role client **server-side only** (`lib/supabase/admin.ts` imports `server-only`).
 - Storage: `truck-images` & `part-images` public (staff write), `uploads` private (`{user_id}/…`), `documents` private (`customers/{customer_id}/…`).
 - Realtime enabled on `job_orders`, `job_order_events`, `service_bookings`, `quotes`, `notifications` (filtered by RLS).
+
+---
+
+## Notifications (email, SMS, in-app)
+
+| Event | Customer | Staff | Trigger |
+| --- | --- | --- | --- |
+| Quote requested (truck / part) | Email | Email (sales / parts inbox) + in-app | Server Action → `after()` |
+| Booking requested | Email (+ SMS if breakdown) | Email (service inbox) + in-app | Server Action → `after()` |
+| Booking confirmed / rescheduled / cancelled | Email + SMS + in-app | — | Database webhook |
+| Job status change (received → released) | Email + in-app (SMS when ready) | — | Database webhook |
+
+- In-app notifications are written by **database triggers**, so they fire no matter where a change happens.
+- Emails are sent with **Resend** idempotency keys — webhook re-deliveries never double-send. Without `RESEND_API_KEY` emails are logged (dev) or skipped.
+- SMS uses Twilio only when `TWILIO_*` is set; Philippine mobiles are normalised to +63.
+- Templates: `server/email/templates.ts`. **Preview in dev:** [localhost:3000/api/dev/emails/index](http://localhost:3000/api/dev/emails/index) (404 in production).
+
+### Setup
+1. **Resend:** add and verify your sending domain (e.g. `jacmotors.ph`), then set `RESEND_API_KEY` and `EMAIL_FROM`.
+2. Set `STAFF_NOTIFY_EMAILS` (and optionally `STAFF_NOTIFY_SALES` / `_PARTS` / `_SERVICE`).
+3. Generate a secret: `openssl rand -hex 32` → `SUPABASE_WEBHOOK_SECRET`.
+4. **Supabase → Database → Webhooks → Create** — two webhooks:
+   - Table `service_bookings`, event **Update**, type HTTP POST, URL `https://YOUR-DOMAIN/api/webhooks/supabase`, header `x-webhook-secret: <secret>`
+   - Table `job_orders`, event **Update**, same URL and header
 
 ---
 
